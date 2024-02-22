@@ -41,8 +41,8 @@ module linked_list_module
         temp => client(name, img_b, img_s)
         current => self%head
 
-        if (asociated(current)) then
-            do while (asociated(current%next))
+        if (associated(current)) then
+            do while (associated(current%next))
                 current => current%next
             end do
             current%next => temp
@@ -60,7 +60,7 @@ module linked_list_module
         current => self%head
         
         integer :: count = 0
-        do while (asociated(current))
+        do while (associated(current))
             print *,count ,"      ", current%name,"  No. big images:",current%img_b,"  No. small images:",current%img_s
             current => current%next
         end do
@@ -78,5 +78,5 @@ module linked_list_module
     end subroutine pop
     
 
-
+end module linked_list_module
 
