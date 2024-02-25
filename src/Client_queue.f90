@@ -1,10 +1,11 @@
 module Client_queue
     implicit none
     private
-
+    
     !client
     type, public :: client
         private
+        integer, allocatable :: uid
         character(:), allocatable :: name
         integer, allocatable :: img_b
         integer, allocatable :: img_s
@@ -15,20 +16,23 @@ module Client_queue
     end type client
 
     !list
-    type, public :: linked_list_clients
+    type, public :: ClientQueue
         private
         type(client), pointer :: head => null()
+        integer :: id = 1
     contains
         procedure :: append
         procedure :: print
-        procedure :: pop
-        procedure :: addsteps
-    end type linked_list_clients
+        procedure :: removeClient
+        procedure :: addSteps
+    end type ClientQueue
     
     contains
 
-    subroutine append(self, name, img_b, img_s)
-        class(linked_list_clients), intent(inout) :: self
+    !append
+    subroutine append(self, uid, name, img_b, img_s)
+        class(ClientQueue), intent(inout) :: self
+        integer, intent(in) :: uid
         character(len=*), intent(in) :: name
         integer, intent(in) :: img_b
         integer, intent(in) :: img_s
@@ -37,9 +41,17 @@ module Client_queue
         type(client), pointer :: temp
 
         allocate(temp)
-        temp = client(name=name, img_b=img_b, img_s=img_s, steps=0)
+        
+        !agrega 1 al contador
+        if (uid>self%id) then
+            self%id = uid
+        end if
+        
+        temp = client(uid=self%id,name=name, img_b=img_b, img_s=img_s, steps=0)
+        self%id = self%id + 1
+        
+        !asocia contadores
         current => self%head
-
         if (associated(current)) then
             do while (associated(current%next))
                 current => current%next
@@ -51,31 +63,52 @@ module Client_queue
         end if
     end subroutine append
 
+    !print
     subroutine print(self)
-
-        class(linked_list_clients), intent(in) :: self
+        class(ClientQueue), intent(in) :: self
         integer :: count = 1
         type(client), pointer :: current
         current => self%head
-        
+        print *, "id        name         big images          small images        steps"
         do while (associated(current))
-            print *,count ,"      ", current%name,"  No. big images:",current%img_b,"  No. small images:",current%img_s
+            print *,current%uid,current%name,current%img_b,current%img_s,current%steps
             current => current%next
             count = count + 1
         end do
     end subroutine print
 
-    subroutine pop(self)
-        class(linked_list_clients), intent(inout) :: self
-
-        type(client), pointer :: parka
-        parka => self%head
-        self%head=>self%head%next
-        self%head%prev => null()
-        deallocate(parka)
-    end subroutine pop
+    subroutine removeClient(self,idclient)
+        class(ClientQueue), intent(inout) :: self
+        type(client), pointer :: Rclient
+        integer, intent(in) :: idclient
+        logical :: found = .false.
+        Rclient => self%head
+        do while (associated(Rclient))
+            if (Rclient%uid == idclient) then
+                Rclient%next%prev => Rclient%prev
+                Rclient%prev%next => Rclient%next
+                deallocate(Rclient)
+                print *, "Client found!, and removed!"
+                return
+            end if
+            Rclient=>Rclient%next
+        end do
+        print *, "Client not found!"
+    end subroutine removeClient
     
-    subroutine
+    !addSteps
+    subroutine addSteps(self)
+        class(ClientQueue), intent(inout) :: self
+        type(client), pointer :: actualclient
+        actualclient => self%head
+        do while (associated(actualclient))
+            actualclient%steps = actualclient%steps + 1
+            actualclient => actualclient%next
+        end do
+        return
+        print *, "Client not found!"
+    end subroutine addSteps
+
 
 end module Client_queue
 
