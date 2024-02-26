@@ -19,7 +19,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
 
     !list
     type, public :: ClientQueue
-        private
         type(client), pointer :: head => null()
         integer :: id = 1
     contains

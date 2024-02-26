@@ -11,17 +11,17 @@ module clientRegisterModule
         type(clientRegister), pointer :: next => null()
     end type clientRegister
 
-    type, public :: HistoryClients
+    type, public :: historyClients
         type(clientRegister), pointer :: head => null()
         type(clientRegister), pointer :: tail => null()
     contains
         procedure :: addClient
-    end type HistoryClients
+    end type historyClients
 
     contains
 
     subroutine addClient(this, name, attendedWindow, NoImages, steps)
-        class(HistoryClients), intent(inout) :: this
+        class(historyClients), intent(inout) :: this
         character(*), intent(in) :: name
         integer, intent(in) :: attendedWindow
         integer, intent(in) :: NoImages
