@@ -1,15 +1,17 @@
-module Client_queue
+module clientQueueModule !(terminado) solo faltaria que agregue clientes aleatoriamente
+
     implicit none
     private
     
     !client
     type, public :: client
-        private
         integer, allocatable :: uid
         character(:), allocatable :: name
         integer, allocatable :: img_b
         integer, allocatable :: img_s
         integer, allocatable :: steps
+        character(:), allocatable :: state
+        integer, allocatable :: attendedWindow
 
         type(client), pointer :: next => null()
         type(client), pointer :: prev => null()
@@ -50,7 +52,7 @@ module Client_queue
         temp = client(uid=self%id,name=name, img_b=img_b, img_s=img_s, steps=0)
         self%id = self%id + 1
         
-        !asocia contadores
+        !agrega el cliente a la lista
         current => self%head
         if (associated(current)) then
             do while (associated(current%next))
@@ -76,12 +78,12 @@ module Client_queue
             count = count + 1
         end do
     end subroutine print
-
+    
+    !removeClient
     subroutine removeClient(self,idclient)
         class(ClientQueue), intent(inout) :: self
         type(client), pointer :: Rclient
         integer, intent(in) :: idclient
-        logical :: found = .false.
         Rclient => self%head
         do while (associated(Rclient))
             if (Rclient%uid == idclient) then
@@ -110,5 +112,6 @@ module Client_queue
     end subroutine addSteps
 
 
-end module Client_queue
+end module clientQueueModule
+
 
