@@ -60,7 +60,7 @@ module windowsModule
             if(current%isbusy) then
                 current%actualClient%steps = current%actualClient%steps + 1
                 if(current%stepsClientneed == current%actualClient%steps) then
-                    current%historyClients%append(uid=current%actualClient%uid,name=current%actualClient%name, img_b=current%actualClient%img_b, img_s=current%actualClient%img_s)
+                    call current%historyClients%appendClient(current%actualClient)
                     current%isbusy = .false.
                 end if
             end if
@@ -79,20 +79,16 @@ module windowsModule
         current => self%first
         do while(associated(current))
             if(.not. current%isbusy) then
-                current
+                current%isbusy = .true.
+                cliente%steps = cliente%steps + 1
+                current%actualClient = cliente
+                current%stepsClientneed = cliente%steps+cliente%img_s+cliente%img_b
                 found = .true.
-                exit
+                return
             end if
             current => current%next
         end do
-
-        if (found) then
-            current%isbusy = .true.
-            current%stepsClientneed = cliente%steps+cliente%img_s+cliente%img_b
-            current%actualClient = cliente
-        else
-            print *, "No hay ventanas disponibles"
-        end if
+        print *, "No hay ventanas disponibles"
 
     end subroutine addClientInWindow
 

@@ -23,6 +23,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer :: id = 1
     contains
         procedure :: append
+        procedure :: appendClient
         procedure :: print
         procedure :: removeClient
         procedure :: addSteps
@@ -63,6 +64,15 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             self%head => temp
         end if
     end subroutine append
+
+    !appendClient
+    subroutine appendClient(self, newClient)
+        class(ClientQueue), intent(inout) :: self
+        type(client), intent(in) :: newClient
+
+        call self%append(newClient%uid, newClient%name, newClient%img_b, newClient%img_s)
+
+    end subroutine appendClient
 
     !print
     subroutine print(self)
