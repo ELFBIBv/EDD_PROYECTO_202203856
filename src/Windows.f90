@@ -1,52 +1,31 @@
-module windowsModule
+module windowsModule 
+    use clientQueueModule
     implicit none
     private
-    use Client_queue
 
     ! window
     type, public :: window
-        private
         integer :: windowsNumber
         Logical :: isbusy = .false.
         integer :: stepsClientneed = 0
         type(client), allocatable :: actualClient
-        type(ClientQueue), allocatable :: HistoryClients
+        type(ClientQueue), allocatable :: historyClients
         type(window), pointer :: next => null()
     end type window
 
     ! window list
     type, public :: window_linked_list
-        private
         integer :: windowsNumber = 1
         type(window), pointer :: first => null()
         contains
-        procedure :: checkOutWindows
         procedure :: addWindow
+        procedure :: checkOutWindows
         procedure :: addClientInWindow
         procedure :: printWindows
     end type window_linked_list
 
     contains
-
-    !checkOutWindows
-    subroutine checkOutWindows(self)
-        class(window_linked_list), intent(inout) :: self
-        type(window), pointer :: current
-
-        current => self%first
-        do while(associated(current))
-            if(current%isbusy) then
-                current%actualClient%steps = current%actualClient%steps + 1
-                if(current%stepsClientneed == current%actualClient%steps) then
-                    current%isbusy = .false.
-                    current%HistoryClients%append(current%actualClient)
-                end if
-            end if
-            current => current%next
-        end do
-    end subroutine checkOutWindows
-
-
+    
     !addWindow
     subroutine addWindow(self)
         class(window_linked_list), intent(inout) :: self
@@ -69,6 +48,26 @@ module windowsModule
             self%first => temp
         end if
     end subroutine addWindow
+    
+    !checkOutWindows
+    subroutine checkOutWindows(self)
+        class(window_linked_list), intent(inout) :: self
+        type(window), pointer :: current
+        type(client), pointer :: cliente
+
+        current => self%first
+        do while(associated(current))
+            if(current%isbusy) then
+                current%actualClient%steps = current%actualClient%steps + 1
+                if(current%stepsClientneed == current%actualClient%steps) then
+                    current%historyClients%append(uid=current%actualClient%uid,name=current%actualClient%name, img_b=current%actualClient%img_b, img_s=current%actualClient%img_s)
+                    current%isbusy = .false.
+                end if
+            end if
+            current => current%next
+        end do
+    end subroutine checkOutWindows
+
 
     !addClientInWin
     subroutine addClientInWindow(self,cliente)

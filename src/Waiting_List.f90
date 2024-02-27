@@ -1,8 +1,8 @@
-module waitingListModule
-    implicit none
-    private
+module waitingListModule 
     use clientRegisterModule
     use clientQueueModule
+    implicit none
+    private
 
     type, public:: waitingList
         type(historyClients), allocatable:: historyclients

@@ -1,9 +1,9 @@
 program main
   use clientQueueModule
+  use clientRegisterModule
+  use imagesModule
+  use waitingListModule
   use windowsModule
-  use linkedListModule
-  use windowLinkedListModule
-  use clientModule
 
   implicit none
   
