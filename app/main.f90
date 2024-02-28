@@ -6,7 +6,6 @@ program main
   use windowsModule
 
   implicit none
-  
   type(Clientqueue) :: list_clients
   type(window_linked_list) :: listwindow
   
