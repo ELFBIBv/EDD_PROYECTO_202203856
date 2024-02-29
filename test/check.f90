@@ -2,5 +2,7 @@ program main
     use jsonReaderModule
     implicit none
     type(jsonReader) :: reader
-    call reader%readJson('data2.json')
+    reader%filename = "data.json"
+    call reader%readJson()
+    
 end program main

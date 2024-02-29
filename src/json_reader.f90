@@ -5,36 +5,67 @@ module jsonReaderModule
     type, public :: jsonReader
         character(:), allocatable :: filename
         type(json_file) :: json
+        type(json_value), pointer :: listPointer, personPointer, attributePointer
+        type(json_core) :: jsonc
+        integer :: size
         contains
         procedure :: readJson
+        procedure :: getText
+        procedure :: getInt
+        procedure :: InicialiceJson
     end type jsonReader
 
     contains
     
-    subroutine readJson(this,rute)
+    subroutine readJson(this)
         class(jsonReader), intent(inout) :: this
-        class(json_file), allocatable :: json
-        character(len=*), intent(in) :: rute
-        character(len=:), allocatable :: json_string
-        integer :: status
-        real(kind=json_rk) :: real_value1, real_value2, real_value3
-        character(len=50) :: nombre
-        integer :: edad
-        character(len=20) :: telefono
-        json = this%json
-
-        call json%load('data2.json', status)
-        if (status == 0) then
-
-            CALL json%get('nombre', real_value1)
-            CALL json%get('edad', real_value2)
-            CALL json%get('contacto/telefono', real_value3)
-
-            print *, "Nombre: ", real_value1
-            print *, "Edad: ", real_value2
-            print *, "Telefono: ", real_value3
-        end if
+        integer :: i,id,img_b,img_s        ! Se declaran variables enteras
+        character(len=100) :: nombre
+        call this%InicialiceJson()  ! Se inicializa el módulo JSON
+        do i = 1, this%size                          ! Se inicia un bucle sobre el número de elementos en el JSON
+            id = this%getInt(poss=i,text="id") 
+            nombre = this%getText(poss=i,text="nombre") 
+            img_b = this%getInt(poss=i,text="img_g") 
+            img_s = this%getInt(poss=i,text="img_p")
+            print *,id,nombre,img_g,img_p
+        end do
+    
     end subroutine
     
+    function getText(this,poss,text) result(value)
+        class(jsonReader), intent(inout) :: this
+        integer, intent(in) :: poss
+        character(len=*), intent(in) :: text
+        character(:), allocatable :: value
+        integer :: i, size        ! Se declaran variables enteras
+        logical :: found
+        
+        
+        call this%jsonc%get_child(this%listPointer, poss, this%personPointer, found = found)  ! Se obtiene el i-ésimo hijo de listPointer
+        call this%jsonc%get_child(this%personPointer, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'nombre' del hijo actual
+        call this%jsonc%get(this%attributePointer, value)  ! Se obtiene el valor y se asigna a la variable 'nombre'
+    end function getText
 
+    function getInt(this,poss,text) result(value)
+        class(jsonReader), intent(inout) :: this
+        integer, intent(in) :: poss
+        character(len=*), intent(in) :: text
+        integer :: value
+        integer :: i, size        ! Se declaran variables enteras
+        logical :: found
+        
+        call this%jsonc%get_child(this%listPointer, poss, this%personPointer, found = found)  ! Se obtiene el i-ésimo hijo de listPointer
+        call this%jsonc%get_child(this%personPointer, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'nombre' del hijo actual
+        call this%jsonc%get(this%attributePointer, value)  ! Se obtiene el valor y se asigna a la variable 'nombre'
+    end function getInt
+
+    subroutine InicialiceJson(this)
+        class(jsonReader), intent(inout) :: this
+        logical :: found
+        call this%json%initialize()    ! Se inicializa el módulo JSON
+        call this%json%load(filename=this%filename)  ! Se carga el archivo JSON llamado 'data.json'
+        call this%json%info('',n_children=this%size)
+        call this%json%get_core(this%jsonc)               ! Se obtiene el núcleo JSON para acceder a sus funciones básicas
+        call this%json%get('', this%listPointer, found)
+    end subroutine InicialiceJson
 end module jsonReaderModule
