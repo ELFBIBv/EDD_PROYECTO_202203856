@@ -71,8 +71,17 @@ module menumodule
             read *, opcion
             if (opcion == "a" .or. opcion == "b") then
                 salir = .false.
-                reader%readJson("data.json")
-                
+                reader%filename = "data.json"
+                call reader%InicialiceJson()
+                call reader%readJson()
+                do i = 1, this%size                          ! Se inicia un bucle sobre el número de elementos en el JSON
+                    id = this%getInt(poss=i,text="id") 
+                    !nombre = this%getText(poss=i,text="nombre") 
+                    img_b = this%getInt(poss=i,text="img_g") 
+                    img_s = this%getInt(poss=i,text="img_p")
+                    
+                    print *,id,nombre,img_b,img_s
+                end do
             else
                 print *, "Opcion no valida"
             end if
