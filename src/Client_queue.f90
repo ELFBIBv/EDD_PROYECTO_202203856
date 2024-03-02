@@ -10,7 +10,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer, allocatable :: img_b
         integer, allocatable :: img_s
         integer, allocatable :: steps
-        character(:), allocatable :: state
         integer, allocatable :: attendedWindow
 
         type(client), pointer :: next => null()
@@ -23,7 +22,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer :: id = 1
     contains
         procedure :: append
-        procedure :: appendClient
         procedure :: print
         procedure :: removeClient
         procedure :: addSteps
@@ -32,12 +30,13 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
     contains
 
     !append
-    subroutine append(self, uid, name, img_b, img_s)
+    subroutine append(self, uid, name, img_b, img_s,attendedWindow)
         class(ClientQueue), intent(inout) :: self
         integer, intent(in) :: uid
         character(len=*), intent(in) :: name
         integer, intent(in) :: img_b
         integer, intent(in) :: img_s
+        integer, intent(in) :: attendedWindow
         
         type(client), pointer :: current
         type(client), pointer :: temp
@@ -49,7 +48,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             self%id = uid
         end if
         
-        temp = client(uid=self%id,name=name, img_b=img_b, img_s=img_s, steps=0)
+        temp = client(uid=self%id,name=name, img_b=img_b, img_s=img_s, steps=0, attendedWindow=attendedWindow)
         self%id = self%id + 1
         
         !agrega el cliente a la lista
@@ -65,26 +64,15 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         end if
     end subroutine append
 
-    !appendClient
-    subroutine appendClient(self, newClient)
-        class(ClientQueue), intent(inout) :: self
-        type(client), intent(in) :: newClient
-
-        call self%append(newClient%uid, newClient%name, newClient%img_b, newClient%img_s)
-
-    end subroutine appendClient
-
     !print
     subroutine print(self)
         class(ClientQueue), intent(in) :: self
-        integer :: count = 1
         type(client), pointer :: current
         current => self%head
         print *, "id        name         big images          small images        steps"
         do while (associated(current))
             print *,current%uid,current%name,current%img_b,current%img_s,current%steps
             current => current%next
-            count = count + 1
         end do
     end subroutine print
     

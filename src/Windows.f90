@@ -1,5 +1,6 @@
-module windowsModule 
+module windowsModule
     use clientQueueModule
+    use printerModule
     implicit none
     private
 
@@ -9,8 +10,8 @@ module windowsModule
         Logical :: isbusy = .false.
         integer :: stepsClientneed = 0
         type(client), allocatable :: actualClient
-        type(ClientQueue), allocatable :: historyClients
         type(window), pointer :: next => null()
+        type(paper), pointer :: paperList
     end type window
 
     ! window list
@@ -34,7 +35,7 @@ module windowsModule
 
         allocate(temp)
 
-        temp = window(windowsNumber = self%windowsNumber,HistoryClients = ClientQueue())
+        temp = window(windowsNumber = self%windowsNumber)
         self%windowsNumber = self%windowsNumber + 1
 
         !agrega la ventana a la lista
@@ -59,8 +60,8 @@ module windowsModule
         do while(associated(current))
             if(current%isbusy) then
                 current%actualClient%steps = current%actualClient%steps + 1
+                current%stepsClientneed = current%stepsClientneed-1
                 if(current%stepsClientneed == current%actualClient%steps) then
-                    call current%historyClients%appendClient(current%actualClient)
                     current%isbusy = .false.
                 end if
             end if
@@ -79,10 +80,11 @@ module windowsModule
         current => self%first
         do while(associated(current))
             if(.not. current%isbusy) then
-                current%isbusy = .true.
                 cliente%steps = cliente%steps + 1
+                cliente%attendedWindow = current%windowsNumber
+                current%isbusy = .true.
                 current%actualClient = cliente
-                current%stepsClientneed = cliente%steps+cliente%img_s+cliente%img_b
+                current%stepsClientneed = cliente%img_s+cliente%img_b
                 found = .true.
                 return
             end if
@@ -99,7 +101,7 @@ module windowsModule
 
         current => self%first
         do while(associated(current))
-            print *, current%windowsNumber, "state: ", current%isbusy, "steps: ", current%stepsClientneed
+            print *, current%windowsNumber, "state: ", current%isbusy, "steps: ", current%actualClient%steps
             current => current%next
         end do
     end subroutine printWindows

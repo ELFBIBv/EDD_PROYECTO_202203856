@@ -37,7 +37,7 @@ module jsonReaderModule
         class(jsonReader), intent(inout) :: this
         integer, intent(in) :: poss
         character(len=*), intent(in) :: text
-        character(len=50) :: valueret
+        character(:), allocatable :: valueret
         integer :: i, size        ! Se declaran variables enteras
         logical :: found
 

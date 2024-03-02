@@ -1,8 +1,15 @@
 module menumodule
     use jsonReaderModule
+    use clientQueueModule
+    use windowsModule
+    use waitingListModule
     implicit none
 
     type, public :: menu
+    private
+    type(clientQueue) :: clientQueue
+    type(window_linked_list) :: windowslist
+    type(waitingList) :: waitingList
     contains
     procedure :: printMenu
     procedure :: parametrosIniciales
@@ -31,14 +38,8 @@ module menumodule
             print *, "5. Acerca de"
             print *, "6. Salir"
             read *, choice
-            if (choice >= 1 .and. choice <= 6) then
-                salir = .false.
-            else
-                print *, "Opcion no valida"
-            end if
-        end do
-
-        select case (choice)
+            
+            select case (choice)
             case (1)
                 call this%parametrosIniciales()
             case (2)
@@ -50,38 +51,55 @@ module menumodule
             case (5)
                 call this%acercaDe()
             case (6)
-                call this%salir()
+                salir = .false.
             case default
                 print *, "Opcion no valida"
-        end select
-        return
-
+            end select
+            return
+        end do
     end subroutine
 
     !Opciones del menú
     subroutine parametrosIniciales(this)
         type(menu), intent(inout) :: this
-        character(len=1) :: opcion
-        logical :: salir = .true.
         type(jsonReader) :: reader
-        do while (.true.)
+        character(len=50) :: nombre
+        character(len=1) :: opcion
+        integer :: id, img_b, img_s, i, j
+        logical :: salir = .true.
+
+        do while (salir)
             print *, "--------Menu de cargas--------"
             print *, "a. Carga masiva de clientes"
             print *, "b. Carga de ventanillas"
+            print *, "c. Regresar"
             read *, opcion
-            if (opcion == "a" .or. opcion == "b") then
+            if (opcion == "a") then
+                print *, "Carga masiva de clientes"
                 salir = .false.
                 reader%filename = "data.json"
                 call reader%InicialiceJson()
                 call reader%readJson()
-                do i = 1, this%size                          ! Se inicia un bucle sobre el número de elementos en el JSON
-                    id = this%getInt(poss=i,text="id") 
-                    !nombre = this%getText(poss=i,text="nombre") 
-                    img_b = this%getInt(poss=i,text="img_g") 
-                    img_s = this%getInt(poss=i,text="img_p")
-                    
+                do i = 1, reader%size
+                    id = reader%getInt(poss=i,text="id") 
+                    nombre = trim(reader%getText(poss=i,text="nombre")) 
+                    img_b = reader%getInt(poss=i,text="img_g") 
+                    img_s = reader%getInt(poss=i,text="img_p")
                     print *,id,nombre,img_b,img_s
+                    call this%clientQueue%append(id,nombre,img_b,img_s)
                 end do
+                this%clientQueue%print()
+            else if (opcion == "b") then
+                salir = .false.
+                print *, "Carga de ventanillas"
+                print *, "Ingrese el numero de ventanillas"
+                read *, i
+                do j = 1, i
+                    call this%windowslist%addWindow(j)
+                end do
+                this%windowslist%printWindows()
+            else if (opcion == "c") then
+                salir = .false.
             else
                 print *, "Opcion no valida"
             end if
@@ -91,6 +109,10 @@ module menumodule
     subroutine ejecutarPaso(this)
         type(menu), intent(inout) :: this
         print *, "Ejecutar paso"
+        call this%clientQueue%addSteps()
+        call this%windowslist%checkOutWindows()
+        call this%waitingList%addWaitingList()
+        !tengo que llamarlas bien
     end subroutine
 
     subroutine estadosEnMemoria(this)
