@@ -71,7 +71,12 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         current => self%head
         print *, "id        name         big images          small images        steps"
         do while (associated(current))
-            print *,current%uid,current%name,current%img_b,current%img_s,current%steps
+            write (*,fmt="(1x,a,i0)",advance="no") " ", current%uid
+            write (*,fmt="(1x,a,a20)",advance="no") " ", current%name
+            write (*,fmt="(1x,a,i3)",advance="no") " ", current%img_b
+            write (*,fmt="(1x,a,i16)",advance="no") " ", current%img_s
+            write (*,fmt="(1x,a,i20)",advance="no") " ", current%steps
+            print *
             current => current%next
         end do
     end subroutine print
@@ -84,11 +89,18 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         Rclient => self%head
         do while (associated(Rclient))
             if (Rclient%uid == idclient) then
-                Rclient%next%prev => Rclient%prev
-                Rclient%prev%next => Rclient%next
-                deallocate(Rclient)
-                print *, "Client found!, and removed!"
-                return
+                if (Rclient%uid /= Rclient%next%uid) then
+                    Rclient%next%prev => Rclient%prev
+                    Rclient%prev%next => Rclient%next
+                    deallocate(Rclient)
+                    print *, "Client found!, and removed!"
+                    return
+                else 
+                    print *, "unico cliente encontrado"
+                    deallocate(Rclient)
+                    print *, "unico cliente removido"
+                    return
+                end if
             end if
             Rclient=>Rclient%next
         end do

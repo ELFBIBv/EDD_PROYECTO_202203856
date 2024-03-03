@@ -1,71 +1,80 @@
 module printerModule
+    use PaperQueueModule
     implicit none
 
-    type, public :: paper
-        integer :: steps
-        type(paper), pointer :: next => null()
-        end type paper
-        
-        type, public :: printer
-        type(paper), pointer :: papel => null()
-        type(printer), pointer :: next => null()
+    type, public :: printer
+        type(paper), pointer :: papeltail => null()
+        type(paper), pointer :: paperhead => null()
+        integer :: steps = 0
         contains
-        procedure :: stepPrint
-        procedure :: finishPaper
-        end type printer
-        
-        type, public :: listPrinter
+        !esta funcion solament será para comprobar si la hoja ya fue impresa
+        procedure :: checkTime
+    end type printer
+    
+    type, public :: listPrinter
         type(printer), pointer :: bprinter
         type(printer), pointer :: sprinter
         contains
-        procedure :: addbigPaper
-        procedure :: addsmallPaper
-        end type listPrinter
-    
+        procedure :: addPaper
+        procedure :: addSteps
+    end type listPrinter
+
         contains
-        
-        !addPaper in the big paper printer
-        subroutine addbigPaper(this)
-            class(listPrinter), intent(inout) :: this
-            type(paper), pointer :: newPaper
-            allocate(newPaper)
-            newPaper%steps = 2
-            if (associated(this%bprinter%papel)) then
-                this%bprinter%papel%next => newPaper
-            else
-                this%bprinter%papel => newPaper
+
+    !addPaper in all printers
+    subroutine addPaper(this,printer_Queue)
+        class(listPrinter), intent(inout) :: this
+        class(printerQueue), intent(inout) :: printer_Queue
+        type(paper), pointer :: actualPaper
+        type(printer), pointer :: actualprinter
+
+        actualPaper => printer_Queue%head
+        allocate(actualPaper)
+
+        do while (associated(actualPaper))
+            !buscamos el tipo de impresora
+            if (actualPaper%steps == 1) then
+                actualprinter => this%sprinter
+            else if (actualPaper%steps == 2) then
+                actualprinter => this%bprinter
             end if
-        end subroutine addbigPaper
-    
-        !addPaper in the small paper printer
-        subroutine addsmallPaper(this)
-            class(listPrinter), intent(inout) :: this
-            type(paper), pointer :: newPaper
-            allocate(newPaper)
-            newPaper%steps = 1
-            if (associated(this%sprinter%papel)) then
-                this%sprinter%papel%next => newPaper
+            !si la impresora tiene papel
+            if (associated(actualprinter%paperhead)) then
+                actualprinter%papeltail%next => actualPaper
+                actualprinter%papeltail => actualPaper
+            !si la impresora no tiene papel
             else
-                this%sprinter%papel => newPaper
+                actualprinter%paperhead => actualPaper
+                actualprinter%papeltail => actualPaper
             end if
-        end subroutine addsmallPaper
+        end do
+    end subroutine addPaper
 
     !stepPrint
-    subroutine stepPrint(this)
-        class(printer), intent(inout) :: this
-        this%papel%steps = this%papel%steps - 1
-    end subroutine stepPrint
+    subroutine addSteps(this)
+        class(listPrinter), intent(inout) :: this
+        call this%sprinter%checkTime()
+        call this%bprinter%checkTime()
+    end subroutine addSteps
 
-    !finishPaper
-    subroutine finishPaper(this)
+    !checkTime (no usar esta funcion de forma individual)
+    subroutine checkTime(this)
         class(printer), intent(inout) :: this
-        type(paper), pointer :: Paper
-        
-        if (this%papel%steps == 0) then
-            Paper => this%papel
-            this%papel => this%papel%next
-            deallocate(Paper)
+        type(paper), pointer :: actualPaper
+        this%steps = this%steps + 1
+        if (associated(this%paperhead) .and. this%steps==this%paperhead%steps) then
+            actualPaper => this%paperhead
+            this%paperhead => this%paperhead%next
+            deallocate(actualPaper)
+            if (this%steps == 1) then
+                print *, "La impresora pequeña ha impreso una hoja"
+            else if (this%steps == 2) then
+                print *, "La impresora grande ha impreso una hoja"
+            else 
+                print *, "error en la parte de impresoras"
+            end if
+            this%steps = 0
         end if
-    end subroutine finishPaper
+    end subroutine checkTime
 
 end module printerModule

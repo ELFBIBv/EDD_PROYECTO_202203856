@@ -3,13 +3,16 @@ module menumodule
     use clientQueueModule
     use windowsModule
     use waitingListModule
+    use printerModule
     implicit none
 
     type, public :: menu
     private
     type(clientQueue) :: clientQueue
     type(window_linked_list) :: windowslist
+    type(listPrinter) :: printerList
     type(waitingList) :: waitingList
+    integer :: steps = 0
     contains
     procedure :: printMenu
     procedure :: parametrosIniciales
@@ -18,6 +21,7 @@ module menumodule
     procedure :: reportes
     procedure :: acercaDe
     procedure :: salir
+    procedure :: Nouse
     end type menu
 
     contains
@@ -30,7 +34,7 @@ module menumodule
         logical :: salir = .true.
 
         do while (salir)
-            print *, "--------Menu--------"
+            print *, "-----------------Menu-----------------"
             print *, "1. Parametros iniciales"
             print *, "2. Ejecutar paso"
             print *, "3. Estados en memoria de las estructuras"
@@ -52,16 +56,18 @@ module menumodule
                 call this%acercaDe()
             case (6)
                 salir = .false.
+            case (7)
+                call this%Nouse()
             case default
                 print *, "Opcion no valida"
             end select
-            return
+            choice = 0
         end do
     end subroutine
 
     !Opciones del menú
-    subroutine parametrosIniciales(this)
-        type(menu), intent(inout) :: this
+    subroutine parametrosIniciales(this) ! terminado
+        class(menu), intent(inout) :: this
         type(jsonReader) :: reader
         character(len=50) :: nombre
         character(len=1) :: opcion
@@ -69,7 +75,7 @@ module menumodule
         logical :: salir = .true.
 
         do while (salir)
-            print *, "--------Menu de cargas--------"
+            print *, "-----------------Menu de cargas-----------------"
             print *, "a. Carga masiva de clientes"
             print *, "b. Carga de ventanillas"
             print *, "c. Regresar"
@@ -85,10 +91,10 @@ module menumodule
                     nombre = trim(reader%getText(poss=i,text="nombre")) 
                     img_b = reader%getInt(poss=i,text="img_g") 
                     img_s = reader%getInt(poss=i,text="img_p")
-                    print *,id,nombre,img_b,img_s
-                    call this%clientQueue%append(id,nombre,img_b,img_s)
+                    !print *,id,nombre,img_b,img_s
+                    call this%clientQueue%append(uid=id,name=nombre,img_b=img_b,img_s=img_s,attendedWindow=0)
                 end do
-                this%clientQueue%print()
+                !call this%clientQueue%print()
             else if (opcion == "b") then
                 salir = .false.
                 print *, "Carga de ventanillas"
@@ -97,36 +103,37 @@ module menumodule
                 do j = 1, i
                     call this%windowslist%addWindow(j)
                 end do
-                this%windowslist%printWindows()
+                !call this%windowslist%printWindows()
             else if (opcion == "c") then
                 salir = .false.
             else
                 print *, "Opcion no valida"
             end if
         end do
+        salir = .true.
     end subroutine
 
     subroutine ejecutarPaso(this)
-        type(menu), intent(inout) :: this
-        print *, "Ejecutar paso"
+        class(menu), intent(inout) :: this
+        this%steps = this%steps + 1
+        write (*,*) "-----------------Paso ", this%steps, "-----------------"
         call this%clientQueue%addSteps()
-        call this%windowslist%checkOutWindows()
-        call this%waitingList%addWaitingList()
+        call this%windowslist%checkWindows(this%clientQueue,this%printerList)
         !tengo que llamarlas bien
     end subroutine
 
     subroutine estadosEnMemoria(this)
-        type(menu), intent(inout) :: this
+        class(menu), intent(inout) :: this
         print *, "Estados en memoria de las estructuras"
     end subroutine
 
     subroutine reportes(this)
-        type(menu), intent(inout) :: this
+        class(menu), intent(inout) :: this
         print *, "Reportes"
     end subroutine
 
     subroutine acercaDe(this)
-        type(menu), intent(inout) :: this
+        class(menu), intent(inout) :: this
         print *, "--------Datos del estudiante:--------"
         print *, "Nombre: Alvaro Josue Morales Rodriguez"
         print *, "Carnet: 202203856"
@@ -134,11 +141,30 @@ module menumodule
         print *, "Seccion: "
         print *, "Año: 2020"
         print *, "-------------------------------------"
+        return
     end subroutine
 
     subroutine salir(this)
-        type(menu), intent(inout) :: this
+        class(menu), intent(inout) :: this
         print *, "Salir"
     end subroutine
+
+    !aqui voy a usar para imprimir estados de las ventanas y de las personas
+    subroutine Nouse(this)
+        class(menu), intent(inout) :: this
+        print *, "clients"
+        print *, "-----------------"
+        call this%clientQueue%print()
+        print *, "-----------------"
+        print *, "windows"
+        print *, "-----------------"
+        call this%windowslist%printWindows()
+        print *, "-----------------"
+        print *, "waiting"
+        print *, "-----------------"
+        call this%waitingList%printWaitingList()
+        print *, "-----------------"
+        
+    end subroutine Nouse
 
 end module menumodule

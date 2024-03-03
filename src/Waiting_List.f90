@@ -10,7 +10,8 @@ module waitingListModule
         contains
         procedure :: addClient
         procedure :: removeClient
-        procedure :: checkOutTime
+        procedure :: checkTime
+        procedure :: printWaitingList
     end type waitingList
 
     contains
@@ -88,16 +89,40 @@ module waitingListModule
     end subroutine removeClient
 
     ! Check out the time of the clients in the waiting list
-    subroutine checkOutTime(this)
+    subroutine checkTime(this)
         class(waitingList), intent(inout) :: this
 
         type(client), pointer :: currentClient
-
-        currentClient => this%head
-        do while (associated(currentClient%next, this%head))
+        if (associated(this%head)) then
+            currentClient => this%head
+            do while (associated(currentClient%next, this%head))
+                if (currentClient%steps == 0) then
+                    call this%removeClient(currentClient%uid)
+                else
+                    currentClient%steps = currentClient%steps - 1
+                end if
                 currentClient => currentClient%next
-        end do
-    end subroutine checkOutTime
+            end do
+        end if
+    end subroutine checkTime
+
+    ! Print the waiting list
+    subroutine printWaitingList(this)
+        class(waitingList), intent(in) :: this
+        type(client), pointer :: currentClient
+        if (associated(this%head)) then
+            currentClient => this%head
+            do while (associated(currentClient%next, this%head))
+                write (*,fmt="(1x,a,i0)",advance="no") "id de cliente ", currentClient%uid
+                write (*,fmt="(1x,a,a)",advance="no") " nombre ", currentClient%name
+                write (*,fmt="(1x,a,i0)",advance="no") "img_b ", currentClient%img_b
+                write (*,fmt="(1x,a,i0)",advance="no") "img_s ", currentClient%img_s
+                write (*,fmt="(1x,a,i0)",advance="no") "No. pasos ", currentClient%steps
+                write (*,fmt="(1x,a,i0)",advance="no") "Ventana atendida ", currentClient%attendedWindow
+                currentClient => currentClient%next
+            end do
+        end if
+    end subroutine printWaitingList
 
 end module waitingListModule
 

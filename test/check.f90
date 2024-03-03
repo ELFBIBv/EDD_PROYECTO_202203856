@@ -5,6 +5,6 @@ program main
     ! type(jsonReader) :: reader
     ! reader%filename = "data.json"
     ! call reader%readJson()
-    type(menumodule) :: menu
-    call menu%menu()
+    type(menu) :: varmanu
+    call varmanu%printMenu()
 end program main
