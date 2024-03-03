@@ -119,6 +119,7 @@ module menumodule
         write (*,*) "-----------------Paso ", this%steps, "-----------------"
         call this%clientQueue%addSteps()
         call this%windowslist%checkWindows(this%clientQueue,this%printerList)
+        call this%clientQueue%addRandomClients()
         !tengo que llamarlas bien
     end subroutine
 
@@ -163,8 +164,6 @@ module menumodule
         print *, "waiting"
         print *, "-----------------"
         call this%waitingList%printWaitingList()
-        print *, "-----------------"
-        
     end subroutine Nouse
 
 end module menumodule
