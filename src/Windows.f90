@@ -1,6 +1,8 @@
 module windowsModule
     use clientQueueModule
+    use PaperQueueModule
     use printerModule
+    use waitingListModule
     implicit none
     private
 
@@ -9,9 +11,11 @@ module windowsModule
         integer :: windowNumber
         Logical :: isbusy = .false.
         integer :: stepsClientneed = 0
+        integer :: img_b = 0
+        integer :: img_s = 0
         type(client), allocatable :: actualClient
         type(window), pointer :: next => null()
-        type(paper), pointer :: paperList
+        type(PaperQueue) :: paperList
     end type window
 
     ! window list
@@ -51,12 +55,15 @@ module windowsModule
     end subroutine addWindow
     
     !checkWindows
-    subroutine checkWindows(self,clientList, printerList)
+    subroutine checkWindows(self,clientList, printerList,waiting_List)
         class(window_linked_list), intent(inout) :: self
         type(ClientQueue), intent(inout) :: clientList
         type(listPrinter), intent(inout) :: printerList
+        type(waitingList), intent(inout) :: waiting_List
+        type(paperQueue), pointer :: paperList
         type(window), pointer :: current
         type(client), pointer :: cliente
+        type(client), pointer :: clientWaiting
 
         current => self%first
         cliente => clientList%head
@@ -64,24 +71,34 @@ module windowsModule
             if(current%isbusy) then
                 current%actualClient%steps = current%actualClient%steps + 1
                 current%stepsClientneed = current%stepsClientneed-1
+                if (current%img_s > 0) then
+                    current%img_s = current%img_s - 1
+                    call current%paperList%addsmallPaper()
+                    print *, "la ventanilla", current%windowNumber, " recibio un papel chico"
+                else if (current%img_b > 0) then
+                    current%img_b = current%img_b - 1
+                    call current%paperList%addbigpaper()
+                    print *, "la ventanilla", current%windowNumber, " recibio un papel grande"
+                end if
                 if(current%stepsClientneed == 0) then
-                    !hacemos que la ventana deje de estar ocupada
                     current%isbusy = .false.
                     print *, "Cliente ", current%actualClient%uid, " sale de la ventana ", current%windowNumber
-                    call self%addClientInWindow(cliente)
-                    call clientList%removeClient(cliente%uid)
                     print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
+                    call self%addClientInWindow(cliente)
+                    call clientList%removeClient()
+                    call printerList%addPaper(current%paperList)
+                    !call waiting_List%addClient(clientWaiting)
                 end if
             else
                 if(associated(cliente)) then
-                    call addClientInWindow(self,cliente)
-                    cliente => cliente%next
                     print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
+                    call self%addClientInWindow(cliente)
+                    print *,"algo1"
+                    call clientList%removeClient()
                     return !quitar esta linea si se quieren llenar todas las ventanas vacias
                 end if
             end if
             current => current%next
-            cliente => cliente%next
         end do
     end subroutine checkWindows 
 
@@ -90,16 +107,18 @@ module windowsModule
         class(window_linked_list), intent(inout) :: self
         type(client), pointer, intent(in) :: cliente
         type(window), pointer :: current
+        type(paperQueue), pointer :: paperList
 
         current => self%first
         do while(associated(current))
             if(.not. current%isbusy) then
-                cliente%steps = cliente%steps + 1
                 cliente%attendedWindow = current%windowNumber
                 current%isbusy = .true.
+                current%stepsClientneed = cliente%img_s+cliente%img_b+1
+                current%img_b = cliente%img_b
+                current%img_s = cliente%img_s
                 current%actualClient = cliente
-                current%stepsClientneed = cliente%img_s+cliente%img_b
-                print *, "Cliente ", cliente%uid, " en la ventana ", current%windowNumber
+                call current%paperList%cleanPaperQueue()
                 return
             end if
             current => current%next
@@ -115,11 +134,12 @@ module windowsModule
         !print *, "Ventanas: "
 
         current => self%first
-        print *, "Ventana "," state ", " steps ", " steps left ", " nombreCliente "
+        print *, "Ventana "," state ", "id "," steps ", " steps left ", " nombreCliente "
         do while(associated(current))
             if (current%isbusy) then
                 write (*,fmt="(1x,i4)",advance="no") current%windowNumber
                 write (*,fmt="(1x,L8)",advance="no") current%isbusy
+                write (*,fmt="(1x,i5)",advance="no") current%actualClient%uid
                 write (*,fmt="(1x,i5)",advance="no") current%actualClient%steps
                 write (*,fmt="(1x,i9)",advance="no") current%stepsClientneed
                 write (*,fmt="(7x,a15)",advance="no") current%actualClient%name

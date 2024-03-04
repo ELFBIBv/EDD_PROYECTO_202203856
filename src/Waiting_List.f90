@@ -120,7 +120,7 @@ module waitingListModule
                 write (*,fmt="(1x,a,i0)",advance="no") "No. pasos ", currentClient%steps
                 write (*,fmt="(1x,a,i0)",advance="no") "Ventana atendida ", currentClient%attendedWindow
                 currentClient => currentClient%next
-            end do
+            end do 
         end if
     end subroutine printWaitingList
 

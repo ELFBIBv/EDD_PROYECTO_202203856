@@ -1,11 +1,11 @@
-module PaperQueueModule
+module PaperQueueModule 
     type, public :: paper
         character(len=10) :: type
         integer :: steps
         type(paper), pointer :: next => null()
     end type paper
 
-    type, public :: printerQueue
+    type, public :: PaperQueue
         type(paper), pointer :: head => null()
         type(paper), pointer :: tail => null()
     contains
@@ -13,12 +13,13 @@ module PaperQueueModule
         procedure :: addsmallPaper
         procedure :: removepaper
         procedure :: printQueue
-    end type printerQueue
+        procedure :: cleanPaperQueue
+    end type PaperQueue
 
     contains
     !addbigpaper
     subroutine addbigpaper(self)
-        class(printerQueue), intent(inout) :: self
+        class(PaperQueue), intent(inout) :: self
         type(paper), pointer :: newpaper
         type(paper), pointer :: current
         current => self%tail
@@ -38,14 +39,13 @@ module PaperQueueModule
 
     !addsmallpaper
     subroutine addsmallpaper(self)
-        class(printerQueue), intent(inout) :: self
+        class(PaperQueue), intent(inout) :: self
         type(paper), pointer :: newpaper
         type(paper), pointer :: current
         current => self%tail
         allocate(newpaper)
         newpaper%type = "small"
         newpaper%steps = 1
-
         !agregamos el papel al final
         if(associated(current)) then
             current%next => newpaper
@@ -58,7 +58,7 @@ module PaperQueueModule
 
     !removepaper
     subroutine removepaper(self)
-        class(printerQueue), intent(inout) :: self
+        class(PaperQueue), intent(inout) :: self
         type(paper), pointer :: current
         current => self%head
         if(associated(current)) then
@@ -69,7 +69,7 @@ module PaperQueueModule
 
     !printQueue
     subroutine printQueue(self)
-        class(printerQueue), intent(in) :: self
+        class(PaperQueue), intent(in) :: self
         type(paper), pointer :: current
         current => self%head
         do while(associated(current))
@@ -77,4 +77,20 @@ module PaperQueueModule
             current => current%next
         end do
     end subroutine printQueue
+
+    !cleanPaperQueue
+    subroutine cleanPaperQueue(self)
+        class(PaperQueue), intent(inout) :: self
+        type(paper), pointer :: current
+        type(paper), pointer :: next
+        current => self%head
+        do while(associated(current))
+            next => current%next
+            deallocate(current)
+            current => next
+        end do
+        self%head => null()
+        self%tail => null()
+    end subroutine cleanPaperQueue
+
 end module PaperQueueModule

@@ -1,10 +1,10 @@
-module printerModule
+module printerModule 
     use PaperQueueModule
     implicit none
 
     type, public :: printer
-        type(paper), pointer :: papeltail => null()
-        type(paper), pointer :: paperhead => null()
+        type(paper),pointer :: papeltail => null()
+        type(paper),pointer :: paperhead => null()
         integer :: steps = 0
         contains
         !esta funcion solament será para comprobar si la hoja ya fue impresa
@@ -15,23 +15,31 @@ module printerModule
         type(printer), pointer :: bprinter
         type(printer), pointer :: sprinter
         contains
+        procedure :: init
         procedure :: addPaper
         procedure :: addSteps
     end type listPrinter
 
-        contains
+    contains
+
+    !init
+    subroutine init(this)
+        class(listPrinter), intent(inout) :: this
+        allocate(this%sprinter)
+        allocate(this%bprinter)
+    end subroutine init
 
     !addPaper in all printers
-    subroutine addPaper(this,printer_Queue)
+    subroutine addPaper(this,PaperList)
         class(listPrinter), intent(inout) :: this
-        class(printerQueue), intent(inout) :: printer_Queue
+        class(PaperQueue), intent(inout) :: PaperList
         type(paper), pointer :: actualPaper
-        type(printer), pointer :: actualprinter
+        type(printer) , pointer:: actualprinter
+        integer :: i
 
-        actualPaper => printer_Queue%head
-        allocate(actualPaper)
-
+        actualPaper => PaperList%head
         do while (associated(actualPaper))
+            print *, "actualPaper", actualPaper%steps
             !buscamos el tipo de impresora
             if (actualPaper%steps == 1) then
                 actualprinter => this%sprinter
@@ -40,13 +48,19 @@ module printerModule
             end if
             !si la impresora tiene papel
             if (associated(actualprinter%paperhead)) then
+                print *, "algo5"
                 actualprinter%papeltail%next => actualPaper
+                print *, "algo6"
                 actualprinter%papeltail => actualPaper
-            !si la impresora no tiene papel
+                !si la impresora no tiene papel
             else
+                print *, "algo7"
                 actualprinter%paperhead => actualPaper
+                print *, "algo8"
                 actualprinter%papeltail => actualPaper
             end if
+            read *, i
+            actualPaper => actualPaper%next
         end do
     end subroutine addPaper
 

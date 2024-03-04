@@ -1,8 +1,0 @@
-{
-    "nombre": "Juan",
-    "edad": 30,
-    "contacto": {
-        "email": "juan@example.com",
-        "telefono": "123-456-7890"
-    }
-}

@@ -7,21 +7,20 @@ module menumodule
     implicit none
 
     type, public :: menu
-    private
-    type(clientQueue) :: clientQueue
-    type(window_linked_list) :: windowslist
-    type(listPrinter) :: printerList
-    type(waitingList) :: waitingList
-    integer :: steps = 0
+        type(clientQueue) :: clientQueue
+        type(window_linked_list) :: windowslist
+        type(listPrinter) :: printerList
+        type(waitingList) :: waitingList
+        integer :: steps = 0
     contains
-    procedure :: printMenu
-    procedure :: parametrosIniciales
-    procedure :: ejecutarPaso
-    procedure :: estadosEnMemoria
-    procedure :: reportes
-    procedure :: acercaDe
-    procedure :: salir
-    procedure :: Nouse
+        procedure :: printMenu
+        procedure :: parametrosIniciales
+        procedure :: ejecutarPaso
+        procedure :: estadosEnMemoria
+        procedure :: reportes
+        procedure :: acercaDe
+        procedure :: salir
+        procedure :: Nouse
     end type menu
 
     contains
@@ -83,7 +82,7 @@ module menumodule
             if (opcion == "a") then
                 print *, "Carga masiva de clientes"
                 salir = .false.
-                reader%filename = "data.json"
+                reader%filename = "[EDD]CalificacionF1_int.json"
                 call reader%InicialiceJson()
                 call reader%readJson()
                 do i = 1, reader%size
@@ -94,6 +93,7 @@ module menumodule
                     !print *,id,nombre,img_b,img_s
                     call this%clientQueue%append(uid=id,name=nombre,img_b=img_b,img_s=img_s,attendedWindow=0)
                 end do
+                call this%printerList%init()
                 !call this%clientQueue%print()
             else if (opcion == "b") then
                 salir = .false.
@@ -118,7 +118,7 @@ module menumodule
         this%steps = this%steps + 1
         write (*,*) "-----------------Paso ", this%steps, "-----------------"
         call this%clientQueue%addSteps()
-        call this%windowslist%checkWindows(this%clientQueue,this%printerList)
+        call this%windowslist%checkWindows(this%clientQueue,this%printerList,this%waitingList)
         call this%clientQueue%addRandomClients()
         !tengo que llamarlas bien
     end subroutine
@@ -164,6 +164,7 @@ module menumodule
         print *, "waiting"
         print *, "-----------------"
         call this%waitingList%printWaitingList()
+        
     end subroutine Nouse
 
 end module menumodule

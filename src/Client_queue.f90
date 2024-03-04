@@ -19,6 +19,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
     !list
     type, public :: ClientQueue
         type(client), pointer :: head => null()
+        type(client), pointer :: tail => null()
         integer :: id = 0
     contains
         procedure :: append
@@ -56,13 +57,11 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         !agrega el cliente a la lista
         current => this%head
         if (associated(current)) then
-            do while (associated(current%next))
-                current => current%next
-            end do
-            current%next => temp
-            temp%prev => current
+            this%tail%next => temp
+            this%tail => temp
         else
             this%head => temp
+            this%tail => temp
         end if
     end subroutine append
 
@@ -84,29 +83,17 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
     end subroutine print
     
     !removeClient
-    subroutine removeClient(this,idclient)
+    subroutine removeClient(this)
         class(ClientQueue), intent(inout) :: this
-        type(client), pointer :: Rclient
-        integer, intent(in) :: idclient
-        Rclient => this%head
-        do while (associated(Rclient))
-            if (Rclient%uid == idclient) then
-                if (Rclient%uid /= Rclient%next%uid) then
-                    Rclient%next%prev => Rclient%prev
-                    Rclient%prev%next => Rclient%next
-                    deallocate(Rclient)
-                    print *, "Client found!, and removed!"
-                    return
-                else 
-                    print *, "unico cliente encontrado"
-                    deallocate(Rclient)
-                    print *, "unico cliente removido"
-                    return
-                end if
-            end if
-            Rclient=>Rclient%next
-        end do
-        print *, "Client not found!"
+        class(client), pointer :: temp
+
+        temp=>this%head
+        if (associated(this%head)) then
+            this%head => this%head%next
+            deallocate(temp)
+        else
+            print *, "No clients to remove"
+        end if
     end subroutine removeClient
     
     !addSteps
@@ -118,8 +105,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             actualclient%steps = actualclient%steps + 1
             actualclient => actualclient%next
         end do
-        return
-        print *, "Client not found!"
     end subroutine addSteps
 
     subroutine addRandomClients(this)
@@ -134,9 +119,9 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer :: img_s
         character(len=20) :: name
 
-        names = ["juan ", "luis ","jose ","lisa ","maria","pedro","lucas","laura","luisa","lucia"]
-        lastname = ["perez     ", "gomez     ","rodriguez ","sanchez   ","garcia    ","lopez     ","martinez  ",& 
-        "gonzalez  ","fernandez ","diaz      "]
+        names = ["Juan ", "Luis ","Jose ","Lisa ","Maria","Pedro","Lucas","Laura","Luisa","Lucia"]
+        lastname = ["Perez     ", "Gomez     ","Rodriguez ","Sanchez   ","Garcia    ","Lopez     ","Martinez  ",& 
+        "Gonzalez  ","Fernandez ","Diaz      "]
 
         iterations = this%getRandomNum(3)
         do i=1,iterations

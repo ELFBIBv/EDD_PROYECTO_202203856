@@ -76,9 +76,9 @@ module jsonReaderModule
         call this%json%get_core(this%jsonc)               ! Se obtiene el núcleo JSON para acceder a sus funciones básicas
         call this%json%get('', this%listPointer, this%found)
         if (this%found) then
-            print *, "Se encontró el archivo"
+            print *, "Se encontro el archivo"
         else
-            print *, "No se encontró el archivo"
+            print *, "No se encontro el archivo"
         end if
     end subroutine InicialiceJson
 end module jsonReaderModule
