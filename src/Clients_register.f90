@@ -16,6 +16,7 @@ module clientRegisterModule
         type(clientRegister), pointer :: tail => null()
     contains
         procedure :: addClient
+        procedure :: printHistoryClients
     end type historyClients
 
     contains
@@ -45,5 +46,23 @@ module clientRegisterModule
             this%tail => newClient
         end if
     end subroutine addClient
+
+    subroutine printHistoryClients(this)
+        class(historyClients), intent(in) :: this
+        type(clientRegister), pointer :: currentClient
+        if (.not.associated(this%head)) then
+            print *, "No clients in the history"
+            return
+        end if
+        currentClient => this%head
+        print *, "name    attendedWindow    NoImages    steps"
+        do while(associated(currentClient))
+            write (*,fmt="(1x,a,a20)",advance="no") " ", currentClient%name
+            write (*,fmt="(1x,a,i0)",advance="no") " ", currentClient%attendedWindow
+            write (*,fmt="(1x,a,i3)",advance="no") " ", currentClient%NoImages
+            write (*,fmt="(1x,a,i16)",advance="no") " ", currentClient%steps
+            currentClient => currentClient%next
+        end do
+    end subroutine printHistoryClients
 
 end module

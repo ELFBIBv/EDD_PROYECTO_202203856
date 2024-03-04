@@ -120,6 +120,7 @@ module menumodule
         call this%clientQueue%addSteps()
         call this%windowslist%checkWindows(this%clientQueue,this%printerList,this%waitingList)
         call this%clientQueue%addRandomClients()
+        call this%waitingList%addSteps()
         !tengo que llamarlas bien
     end subroutine
 

@@ -13,7 +13,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer, allocatable :: attendedWindow
 
         type(client), pointer :: next => null()
-        type(client), pointer :: prev => null()
     end type client
 
     !list

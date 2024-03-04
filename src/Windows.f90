@@ -63,7 +63,7 @@ module windowsModule
         type(paperQueue), pointer :: paperList
         type(window), pointer :: current
         type(client), pointer :: cliente
-        type(client), pointer :: clientWaiting
+        type(client) :: c
 
         current => self%first
         cliente => clientList%head
@@ -85,18 +85,18 @@ module windowsModule
                     print *, "Cliente ", current%actualClient%uid, " sale de la ventana ", current%windowNumber
                     print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
                     call self%addClientInWindow(cliente)
+                    c = clientList%head
+                    call waiting_List%addClient(c%uid, c%name,c%img_b,c%img_s,c%steps,c%attendedWindow)
                     call clientList%removeClient()
                     call printerList%addPaper(current%paperList)
-                    !call waiting_List%addClient(clientWaiting)
+                    return
                 end if
             else
-                if(associated(cliente)) then
-                    print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
-                    call self%addClientInWindow(cliente)
-                    print *,"algo1"
-                    call clientList%removeClient()
-                    return !quitar esta linea si se quieren llenar todas las ventanas vacias
-                end if
+                print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
+                call self%addClientInWindow(cliente)
+                print *,"algo1"
+                call clientList%removeClient()
+                return !quitar esta linea si se quieren llenar todas las ventanas vacias
             end if
             current => current%next
         end do
