@@ -28,20 +28,23 @@ module clientRegisterModule
         integer, intent(in) :: NoImages
         integer, intent(in) :: steps
 
-        type(clientRegister), pointer :: newClient
-        type(clientRegister), pointer :: currentClient
-
+        type(clientRegister), pointer :: newClient, currentClient
+        print *, "1"
         allocate(newClient)
-
+        print *, "1"
         newClient = clientRegister(name, attendedWindow, NoImages, steps)
 
+        print *, "1"
         if(associated(this%head)) then
+
+            print *, "1"
             currentClient => this%head
             do while(associated(currentClient%next))
                 currentClient => currentClient%next
             end do
             currentClient%next => newClient
         else
+            print *, "**************************************************************************************************"
             this%head => newClient
             this%tail => newClient
         end if

@@ -118,9 +118,9 @@ module menumodule
         this%steps = this%steps + 1
         write (*,*) "-----------------Paso ", this%steps, "-----------------"
         call this%clientQueue%addSteps()
-        call this%windowslist%checkWindows(this%clientQueue,this%printerList,this%waitingList)
         call this%clientQueue%addRandomClients()
-        call this%waitingList%addSteps()
+        call this%windowslist%checkWindows(this%clientQueue,this%printerList,this%waitingList)
+        !call this%waitingList%addSteps()
         !tengo que llamarlas bien
     end subroutine
 

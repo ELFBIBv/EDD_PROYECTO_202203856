@@ -75,4 +75,35 @@ module imagesModule
         deallocate(currentImage)
     end subroutine clean
 
+    !Graph_queue
+    subroutine graph(this)
+        class(stackImages), intent(in) :: this
+        type(image), pointer :: current
+
+        integer :: unit, count = 0
+
+        open(unit, file="stackimages.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty iamges", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) count, '   "Node', count, '" [label="', current%type,'"];'
+                if(associated(current%next)) then
+                    write(unit, *) '   "Node', count, '" -> "Node', count+1, '";'
+                end if
+                count = count + 1
+                current => current%next
+
+            end do
+        end if
+        write(unit, *) '}'
+
+        close(unit)
+        call execute_command_line('dot -Tpng stackimages.dot -o stackimages.png')
+    end subroutine graph
+
 end module imagesModule

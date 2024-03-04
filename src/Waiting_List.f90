@@ -15,7 +15,7 @@ module waitingListModule
     end type clientWaiting
     
     type, public:: waitingList
-        type(historyClients), pointer:: historyclients
+        type(historyClients):: historyclients
         type(clientWaiting), pointer :: head => null()
         contains
         procedure :: addClient
@@ -48,7 +48,6 @@ module waitingListModule
         aclient%attendedWindow = attendedWindow
         aclient%stepsClientneed = img_b*2+img_s+1
 
-        aclient%next => null()
         if (associated(this%head)) then
             if (associated(this%head,this%head%next)) then
                 this%head%next => aclient
@@ -101,12 +100,26 @@ module waitingListModule
     ! Check out the time of the clients in the waiting list
     subroutine addSteps(this)
         class(waitingList), intent(inout) :: this
-        type(clientWaiting), pointer :: currentClient
+        type(clientWaiting), pointer :: cc
+        character(:), allocatable :: name
+        integer :: img_b
+        integer :: img_s
+        integer :: steps
+        integer :: attendedWindow
+
+        
         if (associated(this%head)) then
-            currentClient => this%head
-            currentClient%stepsClientneed = currentClient%stepsClientneed - 1
-            if (currentClient%stepsClientneed == 0) then
+            cc => this%head
+            cc%stepsClientneed = cc%stepsClientneed - 1
+            print *, cc%stepsClientneed
+            if (cc%stepsClientneed == 0) then
+                name = this%head%name
+                img_b = this%head%img_b
+                img_s = this%head%img_s
+                steps = this%head%steps
+                attendedWindow = this%head%attendedWindow
                 call this%removeClient()
+                call this%historyclients%addClient(name=name,attendedWindow=attendedWindow, NoImages=img_b + img_s, steps=steps)
             end if
         end if
     end subroutine addSteps
@@ -116,7 +129,9 @@ module waitingListModule
         class(waitingList), intent(in) :: this
         type(clientWaiting), pointer :: currentClient
         logical :: temp = .false.
+        print *, "######################################################################"
         if (associated(this%head)) then
+            print *, "######################################################################"
             currentClient => this%head
             print *, "id        name         big images          small images        steps      stepsneed    attended window"
             do while (.not. temp)
@@ -133,7 +148,6 @@ module waitingListModule
                     temp = .true.
                 end if 
             end do 
-            print *,"algoaaaa"
             call this%historyClients%printHistoryClients()
         else
             print *, "No hay clientes en la lista de espera"

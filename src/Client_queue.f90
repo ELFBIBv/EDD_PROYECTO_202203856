@@ -26,6 +26,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         procedure :: removeClient
         procedure :: addSteps
         procedure :: addRandomClients
+        procedure :: graph
         procedure :: getRandomNum
     end type ClientQueue
     
@@ -80,6 +81,37 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             current => current%next
         end do
     end subroutine print
+
+    !Graph_queue
+    subroutine graph(this)
+        class(ClientQueue), intent(in) :: this
+        type(client), pointer :: current
+
+        integer :: unit, count = 0
+
+        open(unit, file="queue.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty queue", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) count, '   "Node', count, '" [label="', current%name,'"];'
+                if(associated(current%next)) then
+                    write(unit, *) '   "Node', count, '" -> "Node', count+1, '";'
+                end if
+                count = count + 1
+                current => current%next
+
+            end do
+        end if
+        write(unit, *) '}'
+
+        close(unit)
+        call execute_command_line('dot -Tpng queue.dot -o queue.png')
+    end subroutine graph
     
     !removeClient
     subroutine removeClient(this)
@@ -141,6 +173,37 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         end do      
     end subroutine addRandomClients
 
+    !Graph_queue
+    subroutine graph(this)
+        class(ClientQueue), intent(in) :: this
+        type(client), pointer :: current
+
+        integer :: unit, count = 0
+
+        open(unit, file="queue.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty queue", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) count, '   "Node', count, '" [label="', current%name,'"];'
+                if(associated(current%next)) then
+                    write(unit, *) '   "Node', count, '" -> "Node', count+1, '";'
+                end if
+                count = count + 1
+                current => current%next
+
+            end do
+        end if
+        write(unit, *) '}'
+
+        close(unit)
+        call execute_command_line('dot -Tpng queue.dot -o queue.png')
+    end subroutine graph
+    
     !getRandomNum
     function getRandomNum(this,max) result (randomInt)
         class(clientQueue), intent(inout) :: this

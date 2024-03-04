@@ -94,7 +94,6 @@ module windowsModule
             else
                 print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
                 call self%addClientInWindow(cliente)
-                print *,"algo1"
                 call clientList%removeClient()
                 return !quitar esta linea si se quieren llenar todas las ventanas vacias
             end if
@@ -152,4 +151,5 @@ module windowsModule
             current => current%next
         end do
     end subroutine printWindows
+    
 end module
