@@ -77,13 +77,17 @@ module printerModule
         class(listPrinter), intent(inout) :: this
         type(paper), pointer :: actualPaper
         actualPaper => this%sprinter%paperhead
+        print *, "----------------------"
+        print *, "Impresora pequeña"
         do while (associated(actualPaper))
-            write (*,fmt="(1x,a5)",advance="no") actualPaper%steps
+            write (*,fmt="(1x,a5)",advance="no") " ", "|small image|"
             actualPaper => actualPaper%next
         end do
+        print *, "----------------------"
+        print *, "Impresora grande"
         actualPaper => this%bprinter%paperhead
         do while (associated(actualPaper))
-            write (*,fmt="(1x,a5)",advance="no") actualPaper%steps
+            write (*,fmt="(1x,a5)",advance="no") " ", "|big image|"
             actualPaper => actualPaper%next
         end do
     end subroutine printList

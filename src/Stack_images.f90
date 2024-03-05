@@ -55,11 +55,11 @@ module imagesModule
         class(stackImages), intent(inout) :: this
         type(image), pointer :: currentImage
         currentImage => this%head
-        do while (associated(currentImage%next))
-            currentImage => currentImage%next
-        end do
         deallocate(currentImage)
-    end subroutine remove
+        if (associated(this%head%next)) then
+            this%head => this%head%next
+        end if 
+        end subroutine remove
 
     !clean
     subroutine clean(this)

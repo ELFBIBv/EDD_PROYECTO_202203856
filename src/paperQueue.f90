@@ -73,9 +73,6 @@ module PaperQueueModule
         class(PaperQueue), intent(in) :: self
         type(paper), pointer :: current
         current => self%head
-        print *, "-----------------"
-        print *, "Paper Queue:"
-        print *, "-----------------"
         do while(associated(current))
             write (*,fmt="(1x,a5)",advance="no") " ", "|", "->",current%type
             current => current%next
@@ -110,7 +107,7 @@ module PaperQueueModule
         write(unit, *) 'digraph G {'
         
         if (.not. associated(this%head)) then
-            write(unit, *) '"empty" [label="Empty iamges", shape=box];'
+            write(unit, *) '"empty" [label="Empty papers", shape=box];'
         else
             current => this%head
             count = 0

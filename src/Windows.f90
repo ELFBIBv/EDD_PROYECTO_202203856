@@ -21,6 +21,7 @@ module windowsModule
     ! window list
     type, public :: window_linked_list
         type(window), pointer :: head => null()
+        integer :: count =1
         contains
         procedure :: addWindow
         procedure :: checkWindows
@@ -32,32 +33,33 @@ module windowsModule
     contains
     
     !addWindow
-    subroutine addWindow(self,num)
-        class(window_linked_list), intent(inout) :: self
+    subroutine addWindow(this,num)
+        class(window_linked_list), intent(inout) :: this
         type(window), pointer :: temp
         type(window), pointer :: current
         integer, intent(in) :: num
 
         allocate(temp)
 
-        temp%windowNumber = num
+        temp%windowNumber = this%count
+        this%count = this%count + 1
         temp%isbusy = .false.
 
         !agrega la ventana a la lista
-        current => self%head
+        current => this%head
         if(associated(current)) then
             do while(associated(current%next))
                 current => current%next
             end do
             current%next => temp
         else
-            self%head => temp
+            this%head => temp
         end if
     end subroutine addWindow
     
     !checkWindows
-    subroutine checkWindows(self,clientList, printerList,waiting_List)
-        class(window_linked_list), intent(inout) :: self
+    subroutine checkWindows(this,clientList, printerList,waiting_List)
+        class(window_linked_list), intent(inout) :: this
         type(ClientQueue), intent(inout) :: clientList
         type(listPrinter), intent(inout) :: printerList
         type(waitingList), intent(inout) :: waiting_List
@@ -66,7 +68,7 @@ module windowsModule
         type(client), pointer :: cliente
         type(client) :: c
 
-        current => self%head
+        current => this%head
         cliente => clientList%head
         do while(associated(current) .and. associated(cliente))
             if(current%isbusy) then
@@ -85,7 +87,7 @@ module windowsModule
                     current%isbusy = .false.
                     print *, "Cliente ", current%actualClient%uid, " sale de la ventana ", current%windowNumber
                     print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
-                    call self%addClientInWindow(cliente)
+                    call this%addClientInWindow(cliente)
                     c = clientList%head
                     call waiting_List%addClient(c%uid, c%name,c%img_b,c%img_s,c%steps,c%attendedWindow)
                     call clientList%removeClient()
@@ -94,7 +96,7 @@ module windowsModule
                 end if
             else
                 print *, "Cliente ", cliente%uid, " entra a la ventana ", current%windowNumber
-                call self%addClientInWindow(cliente)
+                call this%addClientInWindow(cliente)
                 call clientList%removeClient()
                 return !quitar esta linea si se quieren llenar todas las ventanas vacias
             end if
@@ -103,13 +105,13 @@ module windowsModule
     end subroutine checkWindows 
 
     !addClientInWin
-    subroutine addClientInWindow(self,cliente)
-        class(window_linked_list), intent(inout) :: self
+    subroutine addClientInWindow(this,cliente)
+        class(window_linked_list), intent(inout) :: this
         type(client), pointer, intent(in) :: cliente
         type(window), pointer :: current
         type(paperQueue), pointer :: paperList
 
-        current => self%head
+        current => this%head
         do while(associated(current))
             if(.not. current%isbusy) then
                 cliente%attendedWindow = current%windowNumber
@@ -128,12 +130,12 @@ module windowsModule
     end subroutine addClientInWindow
 
     !printWindows
-    subroutine printWindows(self)
-        class(window_linked_list), intent(inout) :: self
+    subroutine printWindows(this)
+        class(window_linked_list), intent(inout) :: this
         type(window), pointer :: current
         !print *, "Ventanas: "
 
-        current => self%head
+        current => this%head
         print *, "Ventana "," state ", "id "," steps ", " steps left ", " nombreCliente "
         do while(associated(current))
             if (current%isbusy) then
@@ -149,6 +151,14 @@ module windowsModule
                 write (*,fmt="(1x,L8)",advance="no") current%isbusy
                 print *, " "
             end if
+            current => current%next
+        end do
+        current => this%head
+        print *, "-----------------------------"
+        print *, "Paper Queue:"
+        print *, "-----------------------------"
+        do while(associated(current))
+            print *, "-------Ventana ------", current%windowNumber
             call current%paperList%printQueue()
             current => current%next
         end do

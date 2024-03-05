@@ -80,8 +80,8 @@ module menumodule
                 print *, "Carga masiva de clientes"
                 salir = .false.
                 reader%filename = "[EDD]CalificacionF1_int.json"
-                call reader%InicialiceJson()
-                call reader%readJson()
+                !call reader%InicialiceJson()
+                call reader%readJson() 
                 do i = 1, reader%size
                     id = reader%getInt(poss=i,text="id") 
                     nombre = trim(reader%getText(poss=i,text="nombre")) 
@@ -117,8 +117,7 @@ module menumodule
         call this%clientQueue%addSteps()
         call this%clientQueue%addRandomClients()
         call this%windowslist%checkWindows(this%clientQueue,this%printerList,this%waitingList)
-        !call this%waitingList%addSteps()
-        !tengo que llamarlas bien
+        call this%waitingList%addSteps()
     end subroutine
 
     subroutine estadosEnMemoria(this)
@@ -145,6 +144,7 @@ module menumodule
         call this%clientQueue%graphClients()
         call this%windowslist%graphWindows()
         call this%waitingList%graphWaitingList()
+        call this%waitingList%HistoryClients%graphHistoryClients()
     end subroutine
 
     subroutine acercaDe(this)

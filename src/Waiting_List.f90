@@ -82,19 +82,21 @@ module waitingListModule
         type(clientWaiting), pointer :: prevClient
 
         currentClient => this%head
-        do while (associated(currentClient%next, this%head))
-            prevClient => currentClient
+        do while (.not. associated(currentClient%next, this%head))
+            currentClient => currentClient%next
         end do
+        prevClient => currentClient
         currentClient => this%head
-        
+        !
         name = currentClient%name
         img_b = currentClient%img_b
         img_s = currentClient%img_s
         steps = currentClient%steps
         attendedWindow = currentClient%attendedWindow
-        
         call this%historyclients%addClient(name=name,attendedWindow=attendedWindow, NoImages=img_b + img_s, steps=steps)
+        !
         this%head => this%head%next
+        prevClient%next => this%head
         deallocate(currentClient)
     end subroutine removeClient
 
@@ -102,17 +104,14 @@ module waitingListModule
     subroutine addSteps(this)
         class(waitingList), intent(inout) :: this
         type(clientWaiting), pointer :: cc
-        character(:), allocatable :: name
+        character(20) :: name
         integer :: img_b
         integer :: img_s
         integer :: steps
         integer :: attendedWindow
-
-        
         if (associated(this%head)) then
             cc => this%head
             cc%stepsClientneed = cc%stepsClientneed - 1
-            print *, cc%stepsClientneed
             if (cc%stepsClientneed == 0) then
                 name = this%head%name
                 img_b = this%head%img_b
@@ -120,7 +119,6 @@ module waitingListModule
                 steps = this%head%steps
                 attendedWindow = this%head%attendedWindow
                 call this%removeClient()
-                call this%historyclients%addClient(name=name,attendedWindow=attendedWindow, NoImages=img_b + img_s, steps=steps)
             end if
         end if
     end subroutine addSteps
@@ -129,7 +127,10 @@ module waitingListModule
     subroutine printWaitingList(this)
         class(waitingList), intent(inout) :: this
         type(clientWaiting), pointer :: currentClient
-        logical :: temp = .false.
+
+        logical :: temp
+        temp = .false.
+
         if (associated(this%head)) then
             currentClient => this%head
             print *, "id        name         big images          small images        steps      stepsneed    attended window"
@@ -164,7 +165,7 @@ module waitingListModule
         write(unit, *) 'digraph G {'
         
         if (.not. associated(this%head)) then
-            write(unit, *) '"empty" [label="Empty queue", shape=box];'
+            write(unit, *) '"empty" [label="Empty waitingList", shape=box];'
         else
             current => this%head
             count = 0
@@ -177,6 +178,7 @@ module waitingListModule
                 current => current%next
             end do
             write(unit, *) " ",'"Node', count, '" -> "Node', 0, '";'
+            write(unit, *) " ",'"Node', count, '" [label="', trim(current%name),'"];'
         end if
         write(unit, *) '}'
     

@@ -26,8 +26,8 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         procedure :: removeClient
         procedure :: addSteps
         procedure :: addRandomClients
-        procedure :: graphClients
         procedure :: getRandomNum
+        procedure :: graphClients
     end type ClientQueue
     
     contains
