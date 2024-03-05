@@ -15,13 +15,14 @@ module waitingListModule
     end type clientWaiting
     
     type, public:: waitingList
-        type(historyClients):: historyclients
+        type(historyClients) :: historyclients
         type(clientWaiting), pointer :: head => null()
         contains
         procedure :: addClient
         procedure :: removeClient
         procedure :: addSteps
         procedure :: printWaitingList
+        procedure :: graphWaitingList
     end type waitingList
 
     contains
@@ -126,12 +127,10 @@ module waitingListModule
 
     ! Print the waiting list
     subroutine printWaitingList(this)
-        class(waitingList), intent(in) :: this
+        class(waitingList), intent(inout) :: this
         type(clientWaiting), pointer :: currentClient
         logical :: temp = .false.
-        print *, "######################################################################"
         if (associated(this%head)) then
-            print *, "######################################################################"
             currentClient => this%head
             print *, "id        name         big images          small images        steps      stepsneed    attended window"
             do while (.not. temp)
@@ -153,6 +152,37 @@ module waitingListModule
             print *, "No hay clientes en la lista de espera"
         end if
     end subroutine printWaitingList
+
+    !graphWaitingList
+    subroutine graphWaitingList(this)
+        class(waitingList), intent(in) :: this
+        type(clientWaiting), pointer :: current
+    
+        integer :: unit, count = 0
+    
+        open(unit, file="images\waitingList.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty queue", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while( .not. associated(current%next,this%head))
+                write(unit, *) " ",'"Node', count, '" [label="', trim(current%name),'"];'
+                if (associated(current%next)) then
+                    write(unit, *) " ",'"Node', count, '" -> "Node', count+1, '";'
+                end if
+                    count = count + 1
+                current => current%next
+            end do
+            write(unit, *) " ",'"Node', count, '" -> "Node', 0, '";'
+        end if
+        write(unit, *) '}'
+    
+        close(unit)
+        call execute_command_line('dot -Tpng images\waitingList.dot -o images\waitingList.png')
+    end subroutine graphWaitingList
 
 end module waitingListModule
 

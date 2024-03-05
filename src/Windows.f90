@@ -20,12 +20,13 @@ module windowsModule
 
     ! window list
     type, public :: window_linked_list
-        type(window), pointer :: first => null()
+        type(window), pointer :: head => null()
         contains
         procedure :: addWindow
         procedure :: checkWindows
         procedure :: addClientInWindow
         procedure :: printWindows
+        procedure :: graphWindows
     end type window_linked_list
 
     contains
@@ -43,14 +44,14 @@ module windowsModule
         temp%isbusy = .false.
 
         !agrega la ventana a la lista
-        current => self%first
+        current => self%head
         if(associated(current)) then
             do while(associated(current%next))
                 current => current%next
             end do
             current%next => temp
         else
-            self%first => temp
+            self%head => temp
         end if
     end subroutine addWindow
     
@@ -65,7 +66,7 @@ module windowsModule
         type(client), pointer :: cliente
         type(client) :: c
 
-        current => self%first
+        current => self%head
         cliente => clientList%head
         do while(associated(current) .and. associated(cliente))
             if(current%isbusy) then
@@ -108,7 +109,7 @@ module windowsModule
         type(window), pointer :: current
         type(paperQueue), pointer :: paperList
 
-        current => self%first
+        current => self%head
         do while(associated(current))
             if(.not. current%isbusy) then
                 cliente%attendedWindow = current%windowNumber
@@ -132,7 +133,7 @@ module windowsModule
         type(window), pointer :: current
         !print *, "Ventanas: "
 
-        current => self%first
+        current => self%head
         print *, "Ventana "," state ", "id "," steps ", " steps left ", " nombreCliente "
         do while(associated(current))
             if (current%isbusy) then
@@ -148,8 +149,50 @@ module windowsModule
                 write (*,fmt="(1x,L8)",advance="no") current%isbusy
                 print *, " "
             end if
+            call current%paperList%printQueue()
             current => current%next
         end do
     end subroutine printWindows
     
+    subroutine graphWindows(this)
+        class(window_linked_list), intent(in) :: this
+        type(window), pointer :: current
+        character(20) :: clientea
+        type(window), pointer :: next
+        integer :: unit,count =0
+        next => this%head
+        do while(associated(next))
+            count = count + 1
+            call next%paperList%graphPapers(count) !este está imprimiendo solo la cabeza
+            next => next%next
+        end do
+
+        open(unit, file="images\windows.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty windows", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) " ",'"Node', count, '" [label=" Ventana', current%windowNumber,'"];'
+                    if (current%isbusy) then
+                        clientea = current%actualClient%name
+                        write(unit, *) " ",'"Nodec', current%actualClient%uid, '" -> "Node', count, '";'
+                        write(unit, *) " ",'"Nodec', current%actualClient%uid, '" [label=" cliente ',trim(clientea),'"];'
+                    end if
+                if (associated(current%next)) then
+                    write(unit, *) " ",'"Node', count, '" -> "Node', count+1, '";'
+                end if
+                count = count + 1
+                current => current%next
+            end do
+        end if
+        write(unit, *) '}'
+
+        close(unit)
+        call execute_command_line('dot -Tpng images\windows.dot -o images\Window.png')
+    end subroutine graphWindows
+
 end module

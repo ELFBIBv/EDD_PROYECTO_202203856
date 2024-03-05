@@ -29,29 +29,22 @@ module clientRegisterModule
         integer, intent(in) :: steps
 
         type(clientRegister), pointer :: newClient, currentClient
-        print *, "1"
         allocate(newClient)
-        print *, "1"
         newClient = clientRegister(name, attendedWindow, NoImages, steps)
-
-        print *, "1"
         if(associated(this%head)) then
-
-            print *, "1"
             currentClient => this%head
             do while(associated(currentClient%next))
                 currentClient => currentClient%next
             end do
             currentClient%next => newClient
         else
-            print *, "**************************************************************************************************"
             this%head => newClient
             this%tail => newClient
         end if
     end subroutine addClient
 
     subroutine printHistoryClients(this)
-        class(historyClients), intent(in) :: this
+        class(historyClients), intent(inout) :: this
         type(clientRegister), pointer :: currentClient
         if (.not.associated(this%head)) then
             print *, "No clients in the history"

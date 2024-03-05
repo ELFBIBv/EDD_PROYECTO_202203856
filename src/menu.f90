@@ -20,7 +20,6 @@ module menumodule
         procedure :: reportes
         procedure :: acercaDe
         procedure :: salir
-        procedure :: Nouse
     end type menu
 
     contains
@@ -55,8 +54,6 @@ module menumodule
                 call this%acercaDe()
             case (6)
                 salir = .false.
-            case (7)
-                call this%Nouse()
             case default
                 print *, "Opcion no valida"
             end select
@@ -126,12 +123,28 @@ module menumodule
 
     subroutine estadosEnMemoria(this)
         class(menu), intent(inout) :: this
-        print *, "Estados en memoria de las estructuras"
+        print *, "clients"
+        print *, "-----------------"
+        call this%clientQueue%print()
+        print *, "-----------------"
+        print *, "windows"
+        print *, "-----------------"
+        call this%windowslist%printWindows()
+        print *, "-----------------"
+        print *, "waiting"
+        print *, "-----------------"
+        call this%waitingList%printWaitingList()
+        print *, "-----------------"
+        print *, "printer"
+        print *, "-----------------"
+        call this%printerList%printList()
     end subroutine
 
     subroutine reportes(this)
         class(menu), intent(inout) :: this
-        print *, "Reportes"
+        call this%clientQueue%graphClients()
+        call this%windowslist%graphWindows()
+        call this%waitingList%graphWaitingList()
     end subroutine
 
     subroutine acercaDe(this)
@@ -152,20 +165,5 @@ module menumodule
     end subroutine
 
     !aqui voy a usar para imprimir estados de las ventanas y de las personas
-    subroutine Nouse(this)
-        class(menu), intent(inout) :: this
-        print *, "clients"
-        print *, "-----------------"
-        call this%clientQueue%print()
-        print *, "-----------------"
-        print *, "windows"
-        print *, "-----------------"
-        call this%windowslist%printWindows()
-        print *, "-----------------"
-        print *, "waiting"
-        print *, "-----------------"
-        call this%waitingList%printWaitingList()
-        
-    end subroutine Nouse
 
 end module menumodule

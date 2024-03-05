@@ -26,7 +26,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         procedure :: removeClient
         procedure :: addSteps
         procedure :: addRandomClients
-        procedure :: graph
+        procedure :: graphClients
         procedure :: getRandomNum
     end type ClientQueue
     
@@ -82,42 +82,12 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         end do
     end subroutine print
 
-    !Graph_queue
-    subroutine graph(this)
-        class(ClientQueue), intent(in) :: this
-        type(client), pointer :: current
-
-        integer :: unit, count = 0
-
-        open(unit, file="queue.dot", status="replace")
-        write(unit, *) 'digraph G {'
-        
-        if (.not. associated(this%head)) then
-            write(unit, *) '"empty" [label="Empty queue", shape=box];'
-        else
-            current => this%head
-            count = 0
-            do while(associated(current))
-                write(unit, *) count, '   "Node', count, '" [label="', current%name,'"];'
-                if(associated(current%next)) then
-                    write(unit, *) '   "Node', count, '" -> "Node', count+1, '";'
-                end if
-                count = count + 1
-                current => current%next
-
-            end do
-        end if
-        write(unit, *) '}'
-
-        close(unit)
-        call execute_command_line('dot -Tpng queue.dot -o queue.png')
-    end subroutine graph
     
     !removeClient
     subroutine removeClient(this)
         class(ClientQueue), intent(inout) :: this
         class(client), pointer :: temp
-
+        
         temp=>this%head
         if (associated(this%head)) then
             this%head => this%head%next
@@ -137,7 +107,7 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             actualclient => actualclient%next
         end do
     end subroutine addSteps
-
+    
     subroutine addRandomClients(this)
         class(ClientQueue), intent(inout) :: this
         CHARACTER(LEN=20), DIMENSION(10) :: names
@@ -149,11 +119,11 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         integer :: img_b
         integer :: img_s
         character(len=20) :: name
-
+        
         names = ["Juan ", "Luis ","Jose ","Lisa ","Maria","Pedro","Lucas","Laura","Luisa","Lucia"]
         lastname = ["Perez     ", "Gomez     ","Rodriguez ","Sanchez   ","Garcia    ","Lopez     ","Martinez  ",& 
         "Gonzalez  ","Fernandez ","Diaz      "]
-
+        
         iterations = this%getRandomNum(3)
         do i=1,iterations
             numrandom1 = this%getRandomNum(10)
@@ -172,37 +142,6 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
             ! print *, "Client added!"
         end do      
     end subroutine addRandomClients
-
-    !Graph_queue
-    subroutine graph(this)
-        class(ClientQueue), intent(in) :: this
-        type(client), pointer :: current
-
-        integer :: unit, count = 0
-
-        open(unit, file="queue.dot", status="replace")
-        write(unit, *) 'digraph G {'
-        
-        if (.not. associated(this%head)) then
-            write(unit, *) '"empty" [label="Empty queue", shape=box];'
-        else
-            current => this%head
-            count = 0
-            do while(associated(current))
-                write(unit, *) count, '   "Node', count, '" [label="', current%name,'"];'
-                if(associated(current%next)) then
-                    write(unit, *) '   "Node', count, '" -> "Node', count+1, '";'
-                end if
-                count = count + 1
-                current => current%next
-
-            end do
-        end if
-        write(unit, *) '}'
-
-        close(unit)
-        call execute_command_line('dot -Tpng queue.dot -o queue.png')
-    end subroutine graph
     
     !getRandomNum
     function getRandomNum(this,max) result (randomInt)
@@ -215,6 +154,37 @@ module clientQueueModule !(terminado) solo faltaria que agregue clientes aleator
         call random_number(random)
         randomInt = nint(random*(max-1))+1
     end function getRandomNum
+    
+    !Graph_queue
+    subroutine graphClients(this)
+        class(ClientQueue), intent(in) :: this
+        type(client), pointer :: current
+    
+        integer :: unit, count = 0
+    
+        open(unit, file="images\queue.dot", status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty queue", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) " ",'"Node', count, '" [label="', trim(current%name),'"];'
+                if (associated(current%next)) then
+                    write(unit, *) " ",'"Node', count, '" -> "Node', count+1, '";'
+                end if
+                    count = count + 1
+                current => current%next
+            end do
+        end if
+        write(unit, *) '}'
+    
+        close(unit)
+        call execute_command_line('dot -Tpng images\queue.dot -o images\queue.png')
+    end subroutine graphClients
+    
 end module clientQueueModule
 
 

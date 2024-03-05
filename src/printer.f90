@@ -18,6 +18,7 @@ module printerModule
         procedure :: init
         procedure :: addPaper
         procedure :: addSteps
+        procedure :: printList
     end type listPrinter
 
     contains
@@ -71,6 +72,22 @@ module printerModule
         call this%bprinter%checkTime()
     end subroutine addSteps
 
+    !printList
+    subroutine printList(this)
+        class(listPrinter), intent(inout) :: this
+        type(paper), pointer :: actualPaper
+        actualPaper => this%sprinter%paperhead
+        do while (associated(actualPaper))
+            write (*,fmt="(1x,a5)",advance="no") actualPaper%steps
+            actualPaper => actualPaper%next
+        end do
+        actualPaper => this%bprinter%paperhead
+        do while (associated(actualPaper))
+            write (*,fmt="(1x,a5)",advance="no") actualPaper%steps
+            actualPaper => actualPaper%next
+        end do
+    end subroutine printList
+    
     !checkTime (no usar esta funcion de forma individual)
     subroutine checkTime(this)
         class(printer), intent(inout) :: this

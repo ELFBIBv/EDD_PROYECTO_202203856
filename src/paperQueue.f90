@@ -14,6 +14,7 @@ module PaperQueueModule
         procedure :: removepaper
         procedure :: printQueue
         procedure :: cleanPaperQueue
+        procedure :: graphPapers
     end type PaperQueue
 
     contains
@@ -72,10 +73,14 @@ module PaperQueueModule
         class(PaperQueue), intent(in) :: self
         type(paper), pointer :: current
         current => self%head
+        print *, "-----------------"
+        print *, "Paper Queue:"
+        print *, "-----------------"
         do while(associated(current))
-            write (*,fmt="(1x,a,i0)",advance="no") "|",current%type,"|", "->"
+            write (*,fmt="(1x,a5)",advance="no") " ", "|", "->",current%type
             current => current%next
         end do
+        print *, " "
     end subroutine printQueue
 
     !cleanPaperQueue
@@ -93,4 +98,35 @@ module PaperQueueModule
         self%tail => null()
     end subroutine cleanPaperQueue
 
+    subroutine graphPapers(this,counter)
+        class(PaperQueue), intent(in) :: this
+        integer, intent(in) :: counter
+        type(paper), pointer :: current
+        character(len=100) :: path
+
+        integer :: unit, count = 0
+        write(path, "(a, i0, a)") "images\paperQueue", counter, ".dot"
+        open(unit, file=path, status="replace")
+        write(unit, *) 'digraph G {'
+        
+        if (.not. associated(this%head)) then
+            write(unit, *) '"empty" [label="Empty iamges", shape=box];'
+        else
+            current => this%head
+            count = 0
+            do while(associated(current))
+                write(unit, *) " ",'"Node', count, '" [label="', trim(current%type),'"];'
+                if (associated(current%next)) then
+                    write(unit, *) " ",'"Node', count, '" -> "Node', count+1, '";'
+                end if
+                    count = count + 1
+                current => current%next
+            end do
+        end if
+        write(unit, *) '}'
+        close(unit)
+        path=""
+        write(path, "(a, i0, a, i0, a)") "dot -Tpng images\paperQueue",counter,".dot -o images\paperQueue", counter, ".png"
+        call execute_command_line(trim(path))
+    end subroutine graphPapers
 end module PaperQueueModule
