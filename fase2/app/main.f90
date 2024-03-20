@@ -1,6 +1,9 @@
 program main
-  use fase2, only: say_hello
+  use module_jsonReader
   implicit none
-
-  call say_hello()
+  ! print *, "Hello World"
+  type(jsonReader) :: reader
+  reader%filename = "ImagenMario.json"
+  ! call reader%InicialiceJson
+  call reader%readJson
 end program main
