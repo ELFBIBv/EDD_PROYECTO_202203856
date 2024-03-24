@@ -11,7 +11,7 @@ module module_layers
     type :: node
         private
         integer :: i, j
-        character(9) :: value
+        character(7) :: color
         type(node), pointer :: up => null()
         type(node), pointer :: down => null()
         type(node), pointer :: right => null()
@@ -37,26 +37,26 @@ module module_layers
         procedure :: getValue
         ! procedure :: printRowHeaders
     end type
+    contains
 
-contains
     !con esto vamos a ingresar un valor en la matriz
-    !haciendo uso de las coordenadas i, j
-    subroutine insert(self, i, j, value) 
+    !haciendo uso de las coordenadas i (fila), j (columna)
+    subroutine insert(self, i, j, color) 
         class(matrix), intent(inout) :: self  
         integer, intent(in) :: i
         integer, intent(in) :: j
-        logical, intent(in) :: value
+        character(7), intent(in) :: color
 
         type(node), pointer :: new
         type(node), pointer :: row
         type(node), pointer :: column
 
         allocate(new)
-        new = node(i=i, j=j, value=value)
+        new = node(i=i, j=j, color=color)
 
         if(.not. associated(self%root)) then
             allocate(self%root)
-            self%root = node(i=-1, j=-1)
+            self%root = node(i=-1, j=-1, color="#FFFFFF")
         end if
 
         row => self%searchRow(i)
@@ -77,6 +77,7 @@ contains
             call self%insertInRow(new, column)
         end if
     end subroutine insert
+
     !vamos a obtener la columna principal
     function searchColumn(self, j) result(actual)
         class(matrix), intent(in) :: self
@@ -90,6 +91,7 @@ contains
             actual => actual%right
         end do
     end function searchColumn
+
     !vamos a obtener la fila principal
     function searchRow(self, i) result(actual)
         class(matrix), intent(in) :: self
@@ -103,6 +105,7 @@ contains
             actual => actual%down
         end do
     end function searchRow
+    
     !vamos a verificar si el nodo existe
     !si existe, vamos a actualizar su valor
     function nodeExists(self, new) result(exists)
@@ -120,7 +123,7 @@ contains
                 column => rowHeader
                 do while(associated(column))
                     if(column%j == new%j) then
-                        column%value = new%value
+                        column%color = new%color
                         exists = .true.
                         return
                     end if
@@ -132,6 +135,7 @@ contains
         end do
         return
     end function nodeExists
+
     !vamos a insertar una fila principal
     function insertRowHeader(self, i) result(newRowHeader)
         class(matrix), intent(inout) :: self  
@@ -140,9 +144,10 @@ contains
         type(node), pointer :: newRowHeader
         allocate(newRowHeader)
 
-        newRowHeader = node(i=i, j=-1)
+        newRowHeader = node(i=i, j=-1,color="#FFFFFF")
         call self%insertInRow(newRowHeader, self%root)
     end function insertRowHeader
+    
     !vamos a insertar un valor en una fila especifica
     subroutine insertInRow(self, new, rowHeader)
         class(matrix), intent(inout) :: self
@@ -168,6 +173,7 @@ contains
             new%up => actual
         end if
     end subroutine insertInRow
+
     !vamos a insertar una columna principal
     function insertColumnHeader(self, j) result(newColumnHeader)
         class(matrix), intent(inout) :: self  
@@ -176,9 +182,10 @@ contains
         type(node), pointer :: newColumnHeader
         allocate(newColumnHeader)
 
-        newColumnHeader = node(i=-1, j=j)
+        newColumnHeader = node(i=-1, j=j,color="#FFFFFF")
         call self%insertInColumn(newColumnHeader, self%root)
     end function insertColumnHeader
+
     !vamos a insertar un valor en una columna especifica
     subroutine insertInColumn(self, new, columnHeader)
         class(matrix), intent(inout) :: self
@@ -203,6 +210,7 @@ contains
             new%left => actual
         end if
     end subroutine insertInColumn
+
     !vamos a imprimir la matriz
     subroutine print(self)
         class(matrix), intent(inout) :: self  
@@ -220,13 +228,14 @@ contains
             do j = 0, self%width
                 val = self%getValue(i,j)
                 if(.not. val%exists) then
-                    write(*, fmt='(I3)', advance='no') 0
+                    write(*, fmt='(A3)', advance='no') " "
                 else
                     write(*, fmt='(L3)', advance='no') val%value
                 end if
             end do
         end do
     end subroutine print
+
     !vamos a imprimir las cabeceras de las columnas
     subroutine printColumnHeaders(self)
         class(matrix), intent(in) :: self
@@ -236,6 +245,7 @@ contains
             write(*, fmt='(I3)', advance='no') j
         end do
     end subroutine printColumnHeaders
+
     !vamos a obtener el valor de la matriz
     function getValue(self, i, j) result(val)
         class(matrix), intent(in) :: self
@@ -252,7 +262,7 @@ contains
                 column => rowHeader
                 do while(associated(column))
                     if(column%j == j) then
-                        val%value = column%value
+                        val%value = .true.
                         val%exists = .true.
                         return
                     end if

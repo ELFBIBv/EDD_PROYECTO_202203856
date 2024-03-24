@@ -1,30 +1,46 @@
+! program main
+!   use module_jsonReader
+!   use module_layers
+!   use module_bst
+!   implicit none
+!   ! print *, "Hello World"
+!   type(jsonReader) :: reader
+!   type(matrix) :: matriz
+!   reader%filename = "ImagenMario.json"
+!   call reader%readJson(matriz)
+!   call matriz%print()
+! end program main
+
 program main
-  use json_module
+  use module_btree
+  ! use module_users
   implicit none
+  type(BTree) :: bst
+  ! call bst%insert(ordinal_user(name="Juan", DPI=1234567890123_8,password="1234"))
+  ! call bst%insert(ordinal_user(name="Pedro", DPI=1234567890124_8,password="1234"))
+  ! call bst%insert(ordinal_user(name="Maria", DPI=1234567890125_8,password="1234"))
+  ! call bst%insert(ordinal_user(name="Jose", DPI=1234567890126_8,password="1234"))
+  ! call bst%insert(ordinal_user(name="Carlos", DPI=1234567890127_8,password="1234"))
+  call bst%insert(ordinal_user(name="Juan", DPI=1,password="1234"))
+  call bst%insert(ordinal_user(name="Pedro", DPI=2,password="1234"))
+  call bst%insert(ordinal_user(name="Maria", DPI=3,password="1234"))
+  call bst%insert(ordinal_user(name="Jose", DPI=4,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=5,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=6,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=7,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=8,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=9,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=10,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=11,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=12,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=13,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=14,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=15,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=16,password="1234"))
+  call bst%insert(ordinal_user(name="Carlos", DPI=17,password="1234"))
+  call bst%traversal(myNode=bst%returnRoot())
+  call bst%remove(17_8)
+  call bst%traversal(myNode=bst%returnRoot())
 
-  type(json_file) :: json   ! Se declara una variable del tipo json_file
-  type(json_value), pointer :: listPointer, personPointer, attributePointer  ! Se declaran punteros a variables del tipo json_value
-  type(json_core) :: jsonc  ! Se declara una variable del tipo json_core para acceder a las funciones básicas de JSON
-  character(:), allocatable :: nombre  ! Se declara una cadena de caracteres que se asignará dinámicamente
-
-  integer :: i, size        ! Se declaran variables enteras
-  logical :: found
-
-  call json%initialize()    ! Se inicializa el módulo JSON
-  call json%load(filename='ImagenMario.json')  ! Se carga el archivo JSON llamado 'data.json'
-  call json%print()         ! Se imprime el contenido del archivo JSON (opcional
-  
-  call json%info('',n_children=size)
-
-  call json%get_core(jsonc)               ! Se obtiene el núcleo JSON para acceder a sus funciones básicas
-  call json%get('', listPointer, found)
-
-  do i = 1, size                          ! Se inicia un bucle sobre el número de elementos en el JSON
-      call jsonc%get_child(listPointer, i, personPointer, found = found)  ! Se obtiene el i-ésimo hijo de listPointer
-      call jsonc%get_child(personPointer, 'nombre', attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'nombre' del hijo actual
-      call jsonc%get(attributePointer, nombre)  ! Se obtiene el valor y se asigna a la variable 'nombre'
-      print *, trim(nombre)           ! Se imprime el nombre sin espacios en blanco adicionales
-  end do
-
-  call json%destroy()                    ! Se finaliza el módulo JSON
 end program main
+

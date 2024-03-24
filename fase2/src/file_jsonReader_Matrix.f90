@@ -1,5 +1,6 @@
 module module_jsonReader
     use json_module
+    use module_layers
     implicit none
     
     type, public :: jsonReader
@@ -19,32 +20,38 @@ module module_jsonReader
 
     contains
     
-    subroutine readJson(this)
+    subroutine readJson(this,matriz)
         class(jsonReader), intent(inout) :: this
         integer :: i,j,id,no_childs,fila, columna        ! Se declaran variables enteras
         character(len=50), allocatable :: color
-        type(json_value), pointer :: actualchild,actualsubchild
         logical :: found
+        type(json_value), pointer :: actualchild,actualsubchild,pixelatribute
+        type(matrix), intent(inout) :: matriz
         call this%InicialiceJson()  ! Se inicializa el módulo JSON
         do i = 1, this%size         ! Se inicia un bucle sobre el número de elementos en el JSON
             call this%jsonc%get_child(this%listPointer, i,actualchild, found = found)
-            id = this%getInt(poss=i,text="id_capa",actualchild=actualchild)
-            if (.not.found) then
-                print *, "No se obtuvo el id_capa, poss: ", i
-                id = 00000
-            end if
-            print *,"id_capa: ",id
-            do j= 1, no_childs
-                call this%jsonc%get_child(actualchild,"pixeles",actualsubchild,found=found)
-                print *,found
+            if (found) then
+                id = this%getInt(poss=i,text="id_capa",actualchild=actualchild)
                 if (.not.found) then
-                    print *, "No se obtuvo el pixeles, poss: ", j
+                    print *, "No se obtuvo el id_capa, poss: ", i
+                    id = 00000
                 end if
-                fila = this%getInt(poss=j,text="fila",actualchild=actualsubchild)
-                ! columna = this%getInt(poss=j,text="columna",actualchild=actualsubchild)
-                ! color = this%getText(poss=j,text="color",actualchild=actualsubchild)
-                print *, "fila: ",fila,"columna: ",columna,"color: ",color
-            end do
+                print *,"id_capa: ",id
+
+                call this%jsonc%get_child(actualchild,"pixeles",actualsubchild,found=found)
+                call this%jsonc%info(actualsubchild,n_children=no_childs)
+
+                if (.not.found) then
+                    print *, "No se obtuvo el pixeles, poss: ", i
+                end if
+                do j= 1, no_childs
+                    call this%jsonc%get_child(actualsubchild,j,pixelatribute)
+                    fila = this%getInt(poss=j,text="fila",actualchild=pixelatribute)
+                    columna = this%getInt(poss=j,text="columna",actualchild=pixelatribute)
+                    color = this%getText(poss=j,text="color",actualchild=pixelatribute)
+                    call matriz%insert(i=fila,j=columna,color=color)
+                end do
+            end if
         end do
     end subroutine
 
