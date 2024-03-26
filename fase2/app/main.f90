@@ -1,13 +1,11 @@
-PROGRAM Main
-    IMPLICIT NONE
-    integer(kind=8) :: num
-    character(len=20) :: cadena
-    cadena = "1234567890123"
+program convertir_entero_a_texto
+  use module_jsonReader_users  
+  implicit none
+  type (jsonReader) :: json
+  call json%readJson("users.json")
 
-    READ(cadena,*) num
-    PRINT *, "El número es: ", num
-END PROGRAM Main
 
+end program convertir_entero_a_texto
 
 ! module module_btree
 !     ! use module_users

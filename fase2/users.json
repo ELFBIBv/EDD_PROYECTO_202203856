@@ -1,0 +1,12 @@
+[
+    { 
+        "dpi": "1234567890123",
+        "nombre_cliente": "AUX EDD",
+        "password": "edd1s2022" 
+    },
+    {
+        "dpi": "6745567890123",
+        "nombre_cliente": "cliente 2",
+        "password": "edd1s2022" 
+    }
+]
