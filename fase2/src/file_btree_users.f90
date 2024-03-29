@@ -1,5 +1,195 @@
+module linkedListImages
+    implicit none
+    type image
+    integer :: id
+    type(image), pointer :: next => null()
+    end type
+
+    type imageList
+    type(image), pointer :: head => null()
+    type(image), pointer :: tail => null()
+    contains
+    procedure :: addImage
+    procedure :: deleteImage
+    procedure :: searchImage
+    end type
+    contains
+    subroutine addImage(this,id)
+        class(imageList), intent(inout) :: this
+        integer, intent(in) :: id
+        type(image), pointer :: newImage
+        allocate(newImage)
+        newImage%id = id
+        if (.not. associated(this%head)) then
+            this%head => newImage
+            this%tail => newImage
+        else
+            this%tail%next => newImage
+            this%tail => newImage
+        end if
+    end subroutine addImage
+
+    subroutine deleteImage(this,id)
+        class(imageList), intent(inout) :: this
+        integer, intent(in) :: id
+        type(image),pointer :: current
+        type(image), pointer :: previous
+        current => this%head
+        do while (associated(current))
+            if (current%id == id) then
+                if (associated(previous)) then
+                    previous%next => current%next
+                else
+                    this%head => current%next
+                end if
+                deallocate(current)
+                exit
+            end if
+            previous => current
+            current => current%next
+        end do
+    end subroutine deleteImage
+    
+    subroutine searchImage(this,id)
+        class(imageList), intent(in) :: this
+        integer, intent(in) :: id
+        type(image),pointer :: current
+        current => this%head
+        do while (associated(current))
+            if (current%id == id) then
+                print *, "Image found"
+                exit
+            end if
+            current => current%next
+        end do
+        print *, "Image not found"
+    end subroutine searchImage
+end module linkedListImages
+
+module linkedListAlbum
+    use linkedListImages
+    implicit none
+    type album
+        character(:), allocatable :: name
+        type(imageList) :: images
+        type(album), pointer :: next => null()
+        type(album), pointer :: prev => null()
+    end type
+    
+    type albumList
+        type(album), pointer :: head => null()
+        type(album), pointer :: tail => null()
+        contains
+        procedure :: addAlbum
+        procedure :: searchAlbum
+        procedure :: graphAlbumes
+        procedure :: addImageInAlbum
+        procedure :: deleteImageInAlbum
+    end type
+
+    contains
+
+    !subrutinas o funciones para la lista de almbumes
+    subroutine addAlbum(this,name)
+        class(albumList), intent(inout) :: this
+        character(len=*), intent(in) :: name
+        type(album), pointer :: newAlbum
+        allocate(newAlbum)
+        newAlbum%name = name
+        if (.not. associated(this%head)) then
+            this%head => newAlbum
+            this%tail => newAlbum
+        else
+            this%tail%next => newAlbum
+            newAlbum%prev => this%tail
+            this%tail => newAlbum
+        end if
+    end subroutine addAlbum 
+
+    function searchAlbum(this,name) result(res)
+        class(albumList), intent(in) :: this
+        character(len=*), intent(in) :: name
+        type(album), pointer :: current 
+        type(album), pointer :: res
+        current => this%head
+        res => null()
+        do while (associated(current))
+            if (current%name == name) then
+                print *, "Album found"
+                res => current
+                return
+            end if
+            current => current%next
+        end do
+        print *, "Album not found"
+    end function searchAlbum
+
+    subroutine graphAlbumes(this,filename)
+        class(albumList), intent(in) :: this
+        character(len=*), intent(in) :: filename
+        type(album), pointer :: current
+        type(image), pointer :: currentImage
+        character(:), allocatable :: path
+        integer :: file
+        path = "images\"//trim(adjustl(filename))//".dot"
+        open(file, file=path, status="replace")
+        write(file, *) 'digraph G {'
+        do while (associated(current))
+            current => this%head
+            write(file, *) '"Album', trim(adjustl(current%name)), '" [label="', trim(adjustl(current%name)),'"];'
+            if (associated(current%images%head)) then
+                currentImage => current%images%head
+                write(file, *) '"Image', currentImage%id, '" [label="', currentImage%id,'"];'
+                write(file, *) '"Album', trim(adjustl(current%name)), '" -> "Image', currentImage%id, '";'
+                do while (associated(currentImage%next))
+                    write(file, *) '"Image', currentImage%next%id, '" [label="', currentImage%next%id,'"];'
+                    write(file, *) '"Image', currentImage%id, '" -> "Image', currentImage%next%id, '";'
+                    currentImage => currentImage%next
+                end do
+            end if
+            if (associated(current%next)) then
+                write(file, *) '"Album', trim(adjustl(current%name)), '" [label="', trim(adjustl(current%name)),'"];'
+                write(file, *) '"Album', trim(adjustl(current%name)), '" -> "Album', trim(adjustl(current%next%name)), '";'
+            end if
+            current => current%next
+        end do
+        write(file, *) '}'
+        close(file)
+        call execute_command_line(trim("dot -Tpng images\albumes.dot -o images\albumes.png"))
+    end subroutine graphAlbumes
+
+    subroutine addImageInAlbum(this,nameAlbum,idImage)
+        class(albumList), intent(inout) :: this
+        character(len=*), intent(in) :: nameAlbum
+        integer, intent(in) :: idImage
+        type(album), pointer :: currentAlbum
+        type(image), pointer :: newImage
+        currentAlbum => this%searchAlbum(nameAlbum)
+        if (associated(currentAlbum)) then
+            call currentAlbum%images%addImage(idImage)
+        else 
+            print *, "Album not found"
+        end if
+    end subroutine addImageInAlbum
+
+    subroutine deleteImageInAlbum(this,nameAlbum,idImage)
+        class(albumList), intent(inout) :: this
+        character(len=*), intent(in) :: nameAlbum
+        integer, intent(in) :: idImage
+        type(album), pointer :: currentAlbum
+        currentAlbum => this%searchAlbum(nameAlbum)
+        if (associated(currentAlbum)) then
+            call currentAlbum%images%deleteImage(idImage)
+        else 
+            print *, "Album not found"
+        end if
+    end subroutine deleteImageInAlbum
+
+end module linkedListAlbum
+
 module module_ordinal_user
     use module_abbtree_layers
+    use module_avlTree_images
     implicit none
 
     type ordinal_user
@@ -7,6 +197,7 @@ module module_ordinal_user
     integer(kind=8), allocatable :: DPI
     character(:), allocatable :: password
     type(abbtree_layers),allocatable :: PrincipalLayersTree
+    type(avlTree_images),allocatable :: PrincipalImagesTree
 
     contains
     ! procedure :: ver_reportes_estructuras

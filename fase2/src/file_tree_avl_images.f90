@@ -1,4 +1,3 @@
-
 module module_avlTree_images
     use module_abbtree_layers
     implicit none

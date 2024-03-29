@@ -76,7 +76,5 @@ program main
   call avltree%dotgen("prueba")
   print *, "Imagenes en el arbol AVL"
   call reader2%readJson_images(filename="img.json",abbPrincipalTree=abbtree,avlPrincipalTree=avltree)
-  ! call reader2%readJson_images("img.json")
-
 
 end program main
