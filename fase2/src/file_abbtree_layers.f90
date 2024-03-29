@@ -1,0 +1,386 @@
+module module_layer
+    type :: pixel
+        integer :: row
+        integer :: col
+        character(len=7) :: color
+        type(pixel), pointer :: next => null()
+    end type pixel
+
+    type :: pixelList
+        type(pixel), pointer :: head => null()
+        type(pixel), pointer :: tail => null()
+        contains
+            procedure :: insertPixel
+            procedure :: getHead
+    end type pixelList
+
+    type :: layer
+        integer :: id
+        type(pixelList) :: pixels
+        type(layer), pointer :: right => null()
+        type(layer), pointer :: left => null()
+    end type layer
+
+    contains    
+    !Subrutinas del tipo pixelList
+    subroutine insertPixel(this, row, col, color)
+        class(pixelList), intent(inout) :: this
+        integer, intent(in) :: row, col
+        character(len=7), intent(in) :: color
+        type(pixel), pointer :: temp
+        allocate(temp)
+        temp = pixel(col=col, row=row, color=color)
+        if (.not. associated(this%head)) then
+            this%head => temp
+            this%tail => temp
+        else
+            this%tail%next => temp
+            this%tail => this%tail%next
+        end if
+    end subroutine insertPixel
+
+    function getHead(this) result(head)
+        class(pixelList), intent(in) :: this
+        type(pixel), pointer :: head
+        head => this%head
+    end function getHead
+
+end module module_layer
+
+!este no lo he probado del todo
+module module_abbtree_layers
+    use module_layer
+    implicit none
+
+    type :: abbtree_layers
+            type(layer), pointer :: root => null()
+        contains
+            procedure :: insertLayer
+            procedure :: deleteLayer
+            procedure :: preorderABB
+            procedure :: inorderABB
+            procedure :: posorderABB
+            procedure :: graphABBTree
+            procedure :: searchLayer
+            procedure :: searchLayer_Rec
+    end type abbtree_layers
+
+    contains
+
+    !Subrutinas del tipo abbtree_layers
+    subroutine insertLayer(this, id, pixels)
+        class(abbtree_layers), intent(inout) :: this
+        integer, intent(in) :: id
+        type(pixelList), intent(in) :: pixels
+        type(layer), pointer :: capa
+        allocate(capa)
+        capa = layer(id=id, pixels=pixels)
+        if (.not. associated(this%root)) then
+            this%root => capa
+        else
+            call insertRec(this%root, capa)
+        end if
+    end subroutine insertLayer
+
+    !no usar por separado
+    recursive subroutine insertRec(root, capa)
+        type(layer), pointer, intent(inout) :: root
+        class(layer),pointer, intent(in) :: capa
+        ! print *, "capa: ", capa%id, "capa2: ", root%id
+        if (capa%id < root%id) then
+            if (.not. associated(root%left)) then
+                allocate(root%left)
+                root%left => capa
+            else
+                call insertRec(root%left, capa)
+            end if
+        else if (capa%id > root%id) then
+            if (.not. associated(root%right)) then
+                allocate(root%right)
+                root%right => capa
+            else
+                call insertRec(root%right, capa)
+            end if
+        else if (capa%id == root%id) then
+            !revisar esto
+            root => capa
+        end if
+    end subroutine insertRec
+
+    subroutine deleteLayer(this, capa)
+        class(abbtree_layers), intent(inout) :: this
+        integer, intent(in) :: capa
+    
+        this%root => deleteRec(this%root, capa)
+    end subroutine deleteLayer
+
+    !no usar por separado
+    recursive function deleteRec(root, key) result(res)
+        type(layer), pointer :: root
+        integer, intent(in) :: key
+        type(layer), pointer :: res
+        type(layer), pointer :: temp
+
+        if (.not. associated(root)) then
+            res => root
+            return
+        end if
+
+        if (key < root%id) then
+            root%left => deleteRec(root%left, key)
+        else if (key > root%id) then
+            root%right => deleteRec(root%right, key)
+        else
+            if (.not. associated(root%left)) then
+                temp => root%right
+                deallocate(root)
+                res => temp
+                return
+            else if (.not. associated(root%right)) then
+                temp => root%left
+                deallocate(root)
+                res => temp
+                return
+            else
+                call getMajorOfMinorsLayers(root%left, temp)
+                root%id = temp%id
+                root%left => deleteRec(root%left, temp%id)
+            end if
+        end if
+
+        res => root
+    end function deleteRec
+
+    subroutine preorderABB(this)
+        class(abbtree_layers), intent(in) :: this
+        
+        call preorderRec(this%root)
+    end subroutine preorderABB
+
+    subroutine inorderABB(this)
+        class(abbtree_layers), intent(in) :: this
+        
+        call inordenRec(this%root)
+    end subroutine inorderABB
+
+    subroutine posorderABB(this)
+        class(abbtree_layers), intent(in) :: this
+        
+        call posordenRec(this%root)
+    end subroutine posorderABB
+
+    subroutine graphABBTree(this, filename)
+        class(abbtree_layers), intent(in) :: this
+        character(len=*), intent(in) :: filename
+        character(:),allocatable :: path
+        integer :: file
+        path = "images/"//trim(adjustl(filename))//".dot"
+        open(file, file=path, status="replace")
+        write(file, '(A)') 'digraph{'
+        call graphABBTree_rec(this%root, file)
+        write(file, '(A)') '}'
+        close(file)
+        call execute_command_line("dot -Tsvg images/"//trim(adjustl(filename))//".dot > images/"//trim(adjustl(filename))//".svg")
+    end subroutine graphABBTree
+
+    recursive subroutine graphABBTree_rec( tmp, unit)
+        class(layer), intent(in), pointer :: tmp
+        integer, intent(in) :: unit
+        if (.not. associated(tmp)) then
+            return
+        end if
+        write (unit, '(A,I5,A,I5,A)') ' ', tmp%id, ' [label="', tmp%id, '"];'
+        if (associated(tmp%left)) then
+            write (unit, '(A,I5,A,I5,A)') ' ', tmp%id, ' -> ', tmp%left%id, ';'
+        end if
+        if (associated(tmp%right)) then
+            write (unit, '(A,I5,A,I5,A)') ' ', tmp%id, ' -> ', tmp%right%id, ';'
+        end if
+        call graphABBTree_rec(tmp%left, unit)
+        call graphABBTree_rec(tmp%right, unit)
+    end subroutine graphABBTree_rec
+    
+    !no usar por separado
+    recursive subroutine preorderRec(root)
+        type(layer), pointer, intent(in) :: root
+
+        if(associated(root)) then
+            print *, root%id
+            call preorderRec(root%left)
+            call preorderRec(root%right)
+        end if
+    end subroutine preorderRec
+
+    !no usar por separado
+    recursive subroutine inordenRec(root)
+        type(layer), pointer, intent(in) :: root
+
+        if(associated(root)) then
+            call inordenRec(root%left)
+            print *, root%id
+            call inordenRec(root%right)
+        end if
+    end subroutine inordenRec
+
+    !no usar por separado
+    recursive subroutine posordenRec(root)
+        type(layer), pointer, intent(in) :: root
+
+        if(associated(root)) then
+            call posordenRec(root%left)
+            call posordenRec(root%right)
+            print *, root%id
+        end if
+    end subroutine posordenRec
+
+    recursive subroutine getMajorOfMinorsLayers(root, major)
+        type(layer), pointer :: root, major
+        if (associated(root%right)) then
+            call getMajorOfMinorsLayers(root%right, major)
+        else
+            major => root
+        end if
+    end subroutine getMajorOfMinorsLayers
+
+    function searchLayer(this, id) result(res)
+        class(abbtree_layers), intent(in) :: this
+        type(layer), pointer :: res
+        integer, intent(in) :: id
+        type(layer) :: temp
+        temp = layer(id=id)
+        res => this%searchLayer_Rec(this%root, temp)
+    end function searchLayer
+
+    !no usar por separado   
+    recursive function searchLayer_Rec(this,root, temp) result(res)
+        class(abbtree_layers), intent(in) :: this
+        type(layer), pointer :: root
+        type(layer), intent(in) :: temp
+        class(layer), pointer :: res
+        ! print *, "id: ", root%id
+        if (.not. associated(root)) then
+            print *, "No se encontro la capa ", temp%id
+            return
+        end if
+
+        if (temp%id < root%id) then
+            res => this%searchLayer_Rec(root%left, temp)
+        else if (temp%id > root%id) then
+            res => this%searchLayer_Rec(root%right, temp)
+        else
+            print *, "Se encontro la capa ", root%id
+            res => root
+        end if
+    end function searchLayer_Rec
+end module module_abbtree_layers
+
+!este es para leer las capas del archivo json
+module module_jsonReader_layers
+    use json_module
+    use module_layer
+    use module_abbtree_layers
+    implicit none
+    
+    type :: jsonReader_layers
+        type(json_file) :: json
+        type(json_value), pointer :: listPointer, personPointer, attributePointer
+        type(json_core) :: jsonc
+        logical :: found
+        integer :: size
+        contains
+        procedure :: readJson
+        procedure :: getText
+        procedure :: getInt
+    end type jsonReader_layers
+
+    contains
+    
+    subroutine readJson(this,filename,tree)
+        class(jsonReader_layers), intent(inout) :: this
+        character(len=*), intent(in) :: filename
+        type(abbtree_layers), intent(inout) :: tree
+        type(pixelList) :: list
+        integer :: i,j,id,no_childs,fila, columna        ! Se declaran variables enteras
+        character(len=50) :: color
+        type(layer), pointer :: capa
+        logical :: found
+        type(json_value), pointer :: actualchild,actualsubchild,pixelatribute
+        
+        call this%json%initialize()    ! Se inicializa el módulo JSON
+        call this%json%load(filename=filename)  ! Se carga el archivo JSON llamado 'data.json'
+        call this%json%info('',n_children=this%size)
+        call this%json%get_core(this%jsonc)               ! Se obtiene el núcleo JSON para acceder a sus funciones básicas
+        call this%json%get('', this%listPointer, this%found)
+
+        allocate(capa)
+        if (this%found) then
+            print *, "Se encontro el archivo"
+        else
+            print *, "No se encontro el archivo"
+        end if
+        print *, "size: ", this%size
+        do i = 1, this%size         ! Se inicia un bucle sobre el número de elementos en el JSON
+            call this%jsonc%get_child(this%listPointer, i,actualchild, found = found)
+            if (found) then
+                id = this%getInt(poss=i,text="id_capa",actualchild=actualchild)
+                if (.not.found) then
+                    print *, "No se obtuvo el id_capa, poss: ", i
+                    return
+                end if
+                call this%jsonc%get_child(actualchild,"pixeles",actualsubchild,found=found)
+                call this%jsonc%info(actualsubchild,n_children=no_childs)
+                if (.not.found) then
+                    print *, "No se obtuvo el pixeles, poss: ", i
+                    return
+                end if
+                do j= 1, no_childs
+                    call this%jsonc%get_child(actualsubchild,j,pixelatribute)
+                    fila = this%getInt(poss=j,text="fila",actualchild=pixelatribute)
+                    columna = this%getInt(poss=j,text="columna",actualchild=pixelatribute)
+                    color = this%getText(poss=j,text="color",actualchild=pixelatribute)
+                    call list%insertPixel(row=fila,col=columna,color=color)
+                end do
+                print *, "voy aca"
+                call tree%insertLayer(id=id,pixels=list)
+                list = pixelList()
+            end if
+        end do
+    end subroutine
+
+    
+    function getInt(this,poss,text,actualchild) result(valueret)
+        class(jsonReader_layers), intent(inout) :: this
+        integer, intent(in) :: poss
+        type(json_value),intent(in),pointer :: actualchild
+        character(len=*), intent(in) :: text
+        integer :: valueret
+        logical :: found
+        
+        found = .false.
+        call this%jsonc%get_child(actualchild, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'text' del hijo actual
+        call this%jsonc%get(this%attributePointer, valueret)  ! Se obtiene el valor y se asigna a la variable 'valueret'
+        if (.not.found) then
+            print *, "No se obtuvo el numero, poss: ", poss
+            valueret = 00000
+        end if
+    end function getInt
+    
+    function getText(this,poss,text,actualchild) result(valueret)
+        class(jsonReader_layers), intent(inout) :: this
+        integer, intent(in) :: poss
+        type(json_value), intent(in),pointer :: actualchild
+        character(len=*), intent(in) :: text
+        character(:), allocatable :: valueret
+        logical :: found
+
+        found = .false.
+        call this%jsonc%get_child(actualchild, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'text' del hijo actual
+        if (.not.found) then
+            print *, "No se obtuvo el texto, poss:", poss 
+            valueret = "error"
+        end if
+        call this%jsonc%get(this%attributePointer, valueret)  ! Se obtiene el valor y se asigna a la variable 'valueret'
+        
+    end function getText
+    
+end module module_jsonReader_layers

@@ -1,33 +1,35 @@
 module module_ordinal_user
+    use module_abbtree_layers
     implicit none
 
     type ordinal_user
     character(:), allocatable :: name
     integer(kind=8), allocatable :: DPI
     character(:), allocatable :: password
-    ! contains
+    type(abbtree_layers),allocatable :: PrincipalLayersTree
+
+    contains
     ! procedure :: ver_reportes_estructuras
-    ! procedure :: navegacion_imgs
-    ! procedure :: gestion_imgs
+    ! procedure :: navegacion_imgs_gestion_imgs
+    ! procedure :: carga_masiva_capas
+    ! procedure :: carga_masiva_imagenes
+    ! procedure :: carga_masiva_albumes
     end type
+
+    contains
+
 end module
 
 module module_btree
     use module_ordinal_user
     implicit none
 
-    ! integer, parameter :: orden =5
-
-    ! !no mover lo siguiente
-    ! integer, parameter :: MAXI = orden-1
-    ! integer, parameter :: MINI = ceiling((dble(MAXI)-1)/2)
-    
     type nodeptr
         type (BTree), pointer :: ptr => null()
     end type nodeptr
     
     type BTree
-        !orden5
+        !orden=MAXI+1
         integer :: MAXI = 4
         !el numero debe de ser el mismo que el maxi
         integer :: MINI = ceiling((dble(4)-1)/2)
@@ -41,10 +43,9 @@ module module_btree
         procedure :: insert
         procedure :: returnRoot
         procedure :: traversal
+        procedure :: traversal2
         procedure :: remove
-        ! procedure :: search
-        procedure :: graph
-        !
+        procedure :: graphBTree
         procedure :: setValue
         procedure :: splitNode
         procedure :: createNode
@@ -60,8 +61,6 @@ module module_btree
         type(ordinal_user) :: i
         type(BTree), pointer :: child
         allocate(child)
-        ! print *, "maxi", this%MAXI
-        ! print *, "mini", this%MINI
         if (this%setValue(val, i, this%root, child)) then
             this%root => this%createNode(i, child,this%root)
         end if
@@ -204,6 +203,27 @@ module module_btree
         end if
     end subroutine traversal
 
+    recursive subroutine traversal2(this,myNode)
+        class(BTree), intent(in) :: this
+        type(BTree), pointer, intent(in) :: myNode
+        integer :: i
+        if (associated(myNode)) then
+            write (*, '(A)', advance='no') ' ['
+            !en el i=0 no hay nada
+            do i = 1, myNode%num
+                write (*,'(I17)', advance='no') myNode%val(i)%DPI
+                write (*,'(A)', advance='no') "("
+                write (*,'(A)', advance='no') myNode%val(i)%password
+                write (*,'(A)', advance='no') ")"
+            end do
+            do i = 0, myNode%num
+                ! write (*,'(I5)', advance='no') i
+                call this%traversal(myNode%link(i)%ptr)
+            end do
+            write (*, '(A)', advance='no') ' ] '
+        end if
+    end subroutine traversal2
+
     subroutine remove(this,DPI)
         class(BTree), intent(inout) :: this
         integer(kind=8), intent(in) :: DPI
@@ -238,7 +258,7 @@ module module_btree
         end if
     end subroutine deletenode
 
-    recursive subroutine graph(this,myNode)
+    recursive subroutine graphBTree(this,myNode)
         class(BTree), intent(in) :: this
         type(BTree), pointer, intent(in) :: myNode
         type(BTree), pointer :: current
@@ -276,7 +296,7 @@ module module_btree
         write(file, *) '}'
         close(file)
         call execute_command_line(trim("dot -Tpng images\treeUsers.dot -o images\treeUsers.png"))
-    end subroutine graph
+    end subroutine graphBTree
 
     recursive subroutine graphrec(myNode,node1,file)
         type(BTree), pointer, intent(in) :: myNode
@@ -321,9 +341,10 @@ module module_btree
         logical, intent(out) :: found
         integer :: i
         myNode2 => myNode
+        found = .false.
         do while (.not. found)
             if (associated(myNode2)) then
-                print *, "DPI", myNode2%val(1)%DPI, "num", myNode2%num
+                print *, "DPI", myNode2%val(1)%DPI, "num", myNode2%num, "password", trim(adjustl(myNode2%val(1)%password))
                 do i = 0, myNode2%num-1
                     actualuser => myNode2%val(i+1)
                     !entra entre los 2 nodos que el cree conveniente es otra forma de escribir
@@ -359,311 +380,3 @@ module module_btree
     end function getUser
 
 end module module_btree
-
-
-
-! module module_ordinal_user
-!     implicit none
-
-!     type ordinal_user
-!     character(:), allocatable :: name
-!     integer(kind=8), allocatable :: DPI
-!     character(:), allocatable :: password
-!     ! contains
-!     ! procedure :: ver_reportes_estructuras
-!     ! procedure :: navegacion_imgs
-!     ! procedure :: gestion_imgs
-!     end type
-! end module
-
-! module module_btree
-!     use module_ordinal_user
-!     implicit none
-
-!     ! integer, parameter :: orden =5
-
-!     ! !no mover lo siguiente
-!     ! integer, parameter :: MAXI = orden-1
-!     ! integer, parameter :: MINI = ceiling((dble(MAXI)-1)/2)
-    
-!     type nodeptr
-!         type (BTree), pointer :: ptr => null()
-!     end type nodeptr
-    
-!     type BTree
-!         !orden5
-!         integer :: MAXI = 4
-!         !el numero debe de ser el mismo que el maxi
-!         integer :: MINI = ceiling((dble(4)-1)/2)
-!         ! val(0:n), n=maxi+1
-!         type(ordinal_user) :: val(0:5)
-!         integer :: num = 0
-!         ! link(0:n), n=maxi+1
-!         type(nodeptr) :: link(0:5)
-!         type(BTree), pointer :: root => null()
-!         contains
-!         procedure :: insert
-!         procedure :: returnRoot
-!         procedure :: traversal
-!         procedure :: remove
-!         ! procedure :: search
-!         procedure :: graph
-!         !
-!         procedure :: setValue
-!         procedure :: splitNode
-!         procedure :: createNode
-!         procedure :: deletenode
-!     end type BTree
-
-!     contains
-
-!     subroutine insert(this,val)
-!         class(BTree), intent(inout) :: this
-!         type(ordinal_user), intent(in) :: val
-!         type(ordinal_user) :: i
-!         type(BTree), pointer :: child
-!         allocate(child)
-!         ! print *, "maxi", this%MAXI
-!         ! print *, "mini", this%MINI
-!         if (this%setValue(val, i, this%root, child)) then
-!             this%root => this%createNode(i, child,this%root)
-!         end if
-!     end subroutine insert
-
-!     function returnRoot(this) result(myRoot)
-!         class(BTree) :: this
-!         type(BTree), pointer :: myRoot
-!         myRoot => this%root
-!     end function returnRoot
-
-!     recursive function setValue(this,val, pval, node, child) result(res)
-!         class(BTree), intent(inout) :: this
-!         type(ordinal_user), intent(in) :: val
-!         type(ordinal_user), intent(inout) :: pval
-!         type(BTree), pointer, intent(inout) :: node
-!         type(BTree), pointer, intent(inout) :: child
-!         type(BTree), pointer :: newnode        
-!         integer :: pos
-!         logical :: res
-!         allocate(newnode)
-!         if (.not. associated(node)) then            
-!                 pval = val
-!                 child => null()
-!                 res = .true.
-!                 return
-!         end if
-!         if (val%DPI < node%val(1)%DPI) then
-!             pos = 0
-!         else
-!             pos = node%num
-!             do while (val%DPI < node%val(pos)%DPI .and. pos > 1) 
-!             pos = pos - 1
-!             end do
-!             if (val%DPI == node%val(pos)%DPI) then
-!                 print *, "Duplicates are not permitted"
-!                 res = .false.
-!                 return
-!             end if
-!         end if
-!         if (this%setValue(val, pval, node%link(pos)%ptr, child)) then
-!             if (node%num < this%MAXI) then
-!                 call insertNode(pval, pos, node, child)
-!             else
-!                 call this%splitNode(pval, pval, pos, node, child, newnode)
-!                 child => newnode
-!                 res = .true.
-!                 return
-!             end if
-!         end if
-!         res = .false.
-!     end function setValue
-
-!     subroutine insertNode(val, pos, node, child)
-!         type(ordinal_user), intent(in) :: val
-!         integer, intent(in) :: pos
-!         type(BTree), pointer, intent(inout) :: node
-!         type(BTree), pointer, intent(in) :: child
-!         integer :: j
-!         j = node%num
-!         do while (j > pos)
-!                 node%val(j + 1) = node%val(j)
-!                 node%link(j + 1)%ptr => node%link(j)%ptr
-!                 j = j - 1
-!         end do
-!         node%val(j + 1) = val
-!         node%link(j + 1)%ptr => child
-!         node%num = node%num + 1
-!     end subroutine insertNode
-
-!     subroutine splitNode(this,val, pval, pos, node, child, newnode)
-!         class(BTree), intent(in) :: this
-!         type(ordinal_user), intent(in) :: val
-!         integer,intent(in):: pos
-!         type(ordinal_user), intent(inout) :: pval
-!         type(BTree), pointer, intent(inout) :: node,  newnode
-!         type(BTree), pointer, intent(in) ::  child
-!         integer :: median, i, j
-!         if (pos > this%MINI) then
-!                 median = this%MINI + 1
-!         else
-!                 median = this%MINI
-!         end if
-!         if (.not. associated(newnode)) then
-!             allocate(newnode)
-!         do i = 0, this%MAXI
-!                     newnode%link(i)%ptr => null()
-!             enddo
-!         end if
-!         j = median + 1
-!         do while (j <= this%MAXI)
-!                 newnode%val(j - median) = node%val(j)
-!                 newnode%link(j - median)%ptr => node%link(j)%ptr
-!                 j = j + 1
-!         end do
-!         node%num = median
-!         newnode%num = this%MAXI - median
-!         if (pos <= this%MINI) then
-!                 call insertNode(val, pos, node, child)
-!         else
-!                 call insertNode(val, pos - median, newnode, child)
-!         end if        
-!         pval = node%val(node%num)        
-!         newnode%link(0)%ptr => node%link(node%num)%ptr
-!         node%num = node%num - 1
-!     end subroutine splitNode
-
-!     function createNode(this,val, child,root) result(newNode)
-!         class(BTree), intent(in) :: this
-!         type(ordinal_user), intent(in) :: val
-!         type(BTree), pointer, intent(in) :: child
-!         type(BTree), pointer, intent(in) :: root    
-!         type(BTree), pointer :: newNode
-!         integer :: i
-!         allocate(newNode)
-!         newNode%val(1) = val
-!         newNode%num = 1
-!         newNode%link(0)%ptr => root
-!         newNode%link(1)%ptr => child
-!         do i = 2, this%MAXI
-!             newNode%link(i)%ptr => null()
-!         end do
-!     end function createNode
-
-!     recursive subroutine traversal(this,myNode)
-!         class(BTree), intent(in) :: this
-!         type(BTree), pointer, intent(in) :: myNode
-!         integer :: i
-!         if (associated(myNode)) then
-!                 write (*, '(A)', advance='no') ' ['
-!                 i = 0
-!                 do i = 0, myNode%num-1
-!                     ! write (*,'(I15)', advance='no') myNode%val(i)%DPI
-!                     write (*,'(I3)', advance='no') myNode%val(i+1)%DPI
-!                     ! i = i + 1
-!                 end do
-!                 i = 0
-!                 do i = 0, myNode%num
-!                     call this%traversal(myNode%link(i)%ptr)
-!                 end do
-!                 write (*, '(A)', advance='no') ' ] '
-!         end if
-!     end subroutine traversal
-
-!     subroutine remove(this,DPI)
-!         class(BTree), intent(inout) :: this
-!         integer(kind=8), intent(in) :: DPI
-!         class(BTree), pointer :: root2
-!         allocate(root2)
-!         print *, ""
-!         call this%deletenode(DPI,this%root,root2)
-!         this%root => root2%returnRoot()
-!     end subroutine remove
-    
-!     subroutine deletenode(this,DPI,root1,tree)
-!         class(BTree), intent(inout) :: this
-!         integer(kind=8), intent(in) :: DPI
-        
-!         type(BTree), pointer ,intent(out) :: root1
-!         class(BTree), pointer, intent(out) :: tree
-!         integer :: i 
-!         if (associated(root1)) then
-!             do i = 1, root1%num
-!                 if (DPI /= root1%val(i)%DPI) then
-!                     print *, "se inserta DPI en tree", root1%val(i)%DPI
-!                     call tree%insert(root1%val(i))
-!                 else
-!                     print *, "DPI found", DPI
-!                 end if 
-!             end do
-!             i = 0
-!             do i = 0, root1%num
-!                 call this%deletenode(DPI,root1%link(i)%ptr,tree)
-!             end do
-!         end if
-!     end subroutine deletenode
-
-
-!     !no terminado
-!     recursive subroutine graph(this,myNode)
-!         class(BTree), intent(in) :: this
-!         type(BTree), pointer, intent(in) :: myNode
-!         type(BTree), pointer :: current
-!         character(:),allocatable :: path
-!         character(:),allocatable :: node
-!         character(:),allocatable :: casteo
-!         integer :: file
-!         integer :: count = 0
-!         path= "images\treeUsers.dot"
-!         open(file, file=path, status="replace")
-!         write(file, *) 'digraph G {'
-        
-!         if (.not. associated(myNode)) then
-!             write(file, *) '"empty" [label="Empty papers", shape=box];'
-!         else
-!             call graphrec(myNode,count,file)
-!         end if
-!         write(file, *) '}'
-!         close(file)
-!         call execute_command_line(trim("dot -Tpng images\treeUsers.dot -o images\treeUsers.png"))
-!     end subroutine graph
-
-!     recursive subroutine graphrec(myNode,count,file)
-!         type(BTree), pointer, intent(in) :: myNode
-!         type(BTree), pointer :: current
-!         integer, intent(inout) :: count
-!         integer, intent(inout) :: file
-!         !si se va a cambiar el orden hay que cambiar el limite, se estima que para grado 5 son 72
-!         !pero por si las moscas mejor se le pone 200
-!         character(200) :: node
-!         character(15) :: casteo
-!         character(15) :: casteo2
-!         integer :: i
-!         casteo=""
-!         casteo2=""
-!         if (associated(myNode)) then
-!             ! do while(associated(myNode))
-!             ! print *, myNode%val(1)%DPI
-!             write (node,'(I13)') myNode%val(1)%DPI
-!             print *, "entro"
-!             do i = 1, myNode%num-1
-!                 !tengo que correjir esto
-!                 write (casteo,'(I13)') myNode%val(i+1)%DPI
-!                 node=trim(node)//","//trim(adjustl(casteo))
-!                 casteo=""
-!             end do
-!             print *, node
-!             print *, "tamaño de node", myNode%num
-!             write(casteo,'(I15)') count
-!             write(file, *) " ",'"Node', trim(adjustl(casteo)), '" [label="', trim(adjustl(node)),'"];'
-!             casteo=""
-            
-!             do i = 0, myNode%num
-!                 count = count + 1
-!                 call graphrec(myNode%link(i)%ptr,count,file)
-!                 write(casteo,'(I15)') count
-!                 write(casteo2,'(I15)') count+1
-!                 write(file, *) " ",'"Node', trim(adjustl(casteo)), '" -> "Node', trim(adjustl(casteo2)), '";'
-!             end do
-!         end if
-!     end subroutine graphrec
-! end module module_btree

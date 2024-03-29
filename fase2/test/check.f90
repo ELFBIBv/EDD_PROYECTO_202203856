@@ -13,39 +13,6 @@
 ! end program main
 
 !probar que los usuarios los agregue bien
-program main
-  use module_btree
-  ! use module_users
-  implicit none
-  type(BTree) :: bst
-  type(ordinal_user),pointer :: user
-  character(len=50) :: password
-  integer(kind=8) :: i
-  logical :: found
-  do i = 1,17
-    call bst%insert(ordinal_user(name="Juan", DPI=i,password="1234"))
-  end do
-  call bst%remove(20_8)
-  call bst%remove(10_8)
-  call bst%remove(5_8)
-  call bst%remove(3_8)
-  call bst%graph(myNode=bst%returnRoot())
-  call bst%traversal(myNode=bst%returnRoot())
-  print *, ""
-  password = "1234"
-  do i = 1,17
-    print *, "Buscando usuario con DPI: ", i
-    found = .false.
-    user => bst%getUser(DPI=i,password=password,myNode=bst%returnRoot(),found=found)
-    print *, "salio"
-    if (.not. found) then
-      print *, "Usuario encontrado: ", user%name
-    else
-      print *, "Usuario no encontrado"
-    end if
-  end do
-end program main
-
 ! program main
 !   use module_btree
 !   ! use module_users
@@ -54,24 +21,62 @@ end program main
 !   type(ordinal_user),pointer :: user
 !   character(len=50) :: password
 !   integer(kind=8) :: i
-!   do i = 1,17
-!     call bst%insert(ordinal_user(name="Juan", DPI=i,password="1234"))
-!   end do
+!   logical :: found
+!   ! do i = 1,17
+!     call bst%insertImage(ordinal_user(name="Juan", DPI=15,password="1234"))
+!   ! end do
 !   call bst%remove(20_8)
-!   ! call bst%insert(ordinal_user(name="pedro", DPI=18_8,password="1234"))
-!   call bst%graph(myNode=bst%returnRoot())!este me está quitando un nodo que es el principal
-!   call bst%traversal(myNode=bst%returnRoot())
+!   call bst%remove(10_8)
+!   call bst%remove(5_8)
+!   call bst%remove(3_8)
+!   call bst%graph(myNode=bst%returnRoot())
 !   print *, ""
 !   password = "1234"
-!   ! user => bst%getUser(DPI=1_8,password=password,myNode=bst%returnRoot())
-!   ! print *, "Usuario encontrado: ", user%DPI
 !   do i = 1,17
-!     user => bst%getUser(DPI=i,password=password,myNode=bst%returnRoot())
-!     print *, "Usuario encontrado: ", user%name
+!     print *, "Buscando usuario con DPI: ", i
+!     user => bst%getUser(DPI=i,password=password,myNode=bst%returnRoot(),found=found)
+!     if (found) then
+!       print *, "Usuario encontrado: ", user%name
+!     else
+!       print *, "Usuario no encontrado"
+!     end if
 !   end do
-
-  
-!   print *, "Usuario encontrado: ", user%name
-!   print *, "Usuario encontrado: ", user%DPI
-!   print *, "Usuario encontrado: ", user%password
 ! end program main
+
+! !para probar los arboles abb
+! program main
+!   use module_layer
+!   use module_abbtree_layers
+!   use module_jsonReader_layers
+!   implicit none
+!   type(abbtree_layers) :: abbtree
+!   type(jsonReader_layers) :: reader
+!   call reader%readJson("ImagenMario.json", abbtree)
+!   call abbtree%deleteLayer(5)
+!   call abbtree%graphABBTree("prueba")
+
+! end program main
+
+program main
+  use module_layer
+  use module_abbtree_layers
+  use module_jsonReader_layers
+  use module_avlTree_images
+  use module_jsonReader_images
+
+  implicit none
+  type(abbtree_layers) :: abbtree
+  type(jsonReader_layers) :: reader
+  type(avlTree_images) :: avltree
+  type(jsonReader_images) :: reader2
+  
+  call reader%readJson("ImagenMario.json", abbtree)
+  call abbtree%graphABBTree("prueba")
+  call avltree%insertImage(id=5,abb=abbtree)
+  call avltree%dotgen("prueba")
+  print *, "Imagenes en el arbol AVL"
+  call reader2%readJson_images(filename="img.json",abbPrincipalTree=abbtree,avlPrincipalTree=avltree)
+  ! call reader2%readJson_images("img.json")
+
+
+end program main

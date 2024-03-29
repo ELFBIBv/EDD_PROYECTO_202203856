@@ -1,24 +1,24 @@
 module module_bst
-	implicit none
-	integer :: id = 1
-	type :: node
-		integer :: value
-		integer :: uid 
-		type(node), pointer :: left => null()
-		type(node), pointer :: right => null()
-	end type
+    implicit none
+    integer :: id = 1
+    type :: node
+        integer :: value
+        integer :: uid 
+        type(node), pointer :: left => null()
+        type(node), pointer :: right => null()
+    end type
 
-	type :: bst
-		type(node), pointer :: root => null()
-		contains
-		procedure :: add
-		procedure :: add_rec
-		procedure :: preorder
-		procedure :: inorder
-		procedure :: postorder
-		procedure :: dotgen
-		procedure :: dotgen_rec
-	end type
+    type :: bst
+        type(node), pointer :: root => null()
+    contains
+        procedure :: add
+        procedure :: add_rec
+        procedure :: preorder
+        procedure :: inorder
+        procedure :: postorder
+        procedure :: dotgen
+        procedure :: dotgen_rec
+    end type
     
     contains
 
@@ -35,7 +35,7 @@ module module_bst
             tmp%uid = id
             id = id + 1
             this%root => tmp
-        end if	
+        end if
     end subroutine add
 
     !con esta funcion va agregar los valores (no usar esta funcion por aparte)
@@ -61,7 +61,7 @@ module module_bst
                 tmp%right%uid = id
                 id = id + 1
             end if
-        end if	
+        end if
     end subroutine add_rec
 
     !solo imprime en preorden
@@ -135,4 +135,4 @@ module module_bst
         call this%dotgen_rec(tmp%left, unit)
         call this%dotgen_rec(tmp%right, unit)
     end subroutine dotgen_rec
-end module bstdef
+end module module_bst
