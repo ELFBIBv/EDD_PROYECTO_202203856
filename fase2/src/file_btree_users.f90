@@ -12,21 +12,28 @@ module linkedListImages
         procedure :: addImage
         procedure :: deleteImage
         procedure :: existID
+        procedure :: searchid
     end type
 
     contains
     subroutine addImage(this,id)
         class(imageList), intent(inout) :: this
         integer, intent(in) :: id
-        type(image), pointer :: newImage
-        allocate(newImage)
-        newImage%id = id
-        if (.not. associated(this%head)) then
-            this%head => newImage
-            this%tail => newImage
+        type(image), pointer :: newImage,test
+        test => this%searchid(id)
+        if (.not. associated(test)) then
+            allocate(newImage)
+            newImage%id = id
+            if (.not. associated(this%head)) then
+                this%head => newImage
+                this%tail => newImage
+            else
+                this%tail%next => newImage
+                this%tail => newImage
+            end if
         else
-            this%tail%next => newImage
-            this%tail => newImage
+            print *, "Image already exists"
+            test%id = id
         end if
     end subroutine addImage
 
@@ -36,6 +43,7 @@ module linkedListImages
         type(image),pointer :: current
         type(image), pointer :: previous
         current => this%head
+        previous => null()
         do while (associated(current))
             if (current%id == id) then
                 if (associated(previous)) then
@@ -65,6 +73,25 @@ module linkedListImages
         end do
         print *, "Image not found"
     end subroutine existID
+
+    function searchid(this,id) result(res)
+        class(imageList), intent(inout) :: this
+        integer, intent(in) :: id
+        type(image), pointer :: current 
+        type(image), pointer :: res
+        current => this%head
+        res => null()
+        do while (associated(current))
+            if (current%id == id) then
+                print *, "Image found"
+                res => current
+                return
+            end if
+            current => current%next
+        end do
+        print *, "Image not found"
+    end function searchid
+
 end module linkedListImages
 
 module linkedListAlbum
@@ -86,6 +113,7 @@ module linkedListAlbum
         procedure :: graphAlbumes
         procedure :: addImageInAlbum
         procedure :: deleteImageInAlbum
+        procedure :: deleteImageInAllAlbums
     end type
 
     contains
@@ -94,16 +122,19 @@ module linkedListAlbum
     subroutine addAlbum(this,name)
         class(albumList), intent(inout) :: this
         character(len=*), intent(in) :: name
-        type(album), pointer :: newAlbum
-        allocate(newAlbum)
-        newAlbum%name = name
-        if (.not. associated(this%head)) then
-            this%head => newAlbum
-            this%tail => newAlbum
-        else
-            this%tail%next => newAlbum
-            newAlbum%prev => this%tail
-            this%tail => newAlbum
+        type(album), pointer :: newAlbum,test
+        test => this%searchAlbum(name)
+        if (.not. associated(test)) then
+            allocate(newAlbum)
+            newAlbum%name = name
+            if (.not. associated(this%head)) then
+                this%head => newAlbum
+                this%tail => newAlbum
+            else
+                this%tail%next => newAlbum
+                newAlbum%prev => this%tail
+                this%tail => newAlbum
+            end if
         end if
     end subroutine addAlbum 
 
@@ -203,6 +234,18 @@ module linkedListAlbum
             print *, "Album not found"
         end if
     end subroutine deleteImageInAlbum
+
+    subroutine deleteImageInAllAlbums(this,idImage)
+        class(albumList), intent(inout) :: this
+        integer, intent(in) :: idImage
+        type(album), pointer :: currentAlbum
+        type(image), pointer :: currentImage
+        currentAlbum => this%head
+        do while (associated(currentAlbum))
+            call currentAlbum%images%deleteImage(idImage)
+            currentAlbum => currentAlbum%next
+        end do
+    end subroutine deleteImageInAllAlbums
 
 end module linkedListAlbum
 
@@ -312,21 +355,20 @@ module module_ordinal_user
 
     contains
     procedure :: ver_reportes_estructuras
-    ! procedure :: navegacion_imgs_gestion_imgs
+    procedure :: navegacion_gestion_imagenes
     procedure :: carga_masiva_capas
     procedure :: carga_masiva_imagenes
     procedure :: carga_masiva_albumes
+    procedure :: reportes_de_usuario
     procedure :: por_recorrido_limitado! no usar este
     procedure :: por_arbol_de_imagenes! no usar este
-    ! procedure :: por_capa ! no usar este
+    procedure :: por_capa ! no usar este
     end type ordinal_user
 
     contains
     subroutine ver_reportes_estructuras(this)
         class(ordinal_user), intent(in) :: this
         type(pixel), pointer :: actPixel
-        type(matrix) :: actmatrix
-        type(layer), pointer :: layertemp
         type(queue) :: cola
         logical :: found
         integer :: response,i,j,option
@@ -337,73 +379,24 @@ module module_ordinal_user
             print *, "---------------------------------"
             print *, "1. graficar arboles"
             print *, "2. graficar matriz de una capa"
-            print *, "3. graficar imagen"
+            print *, "3. reportes del usuario"
             print *, "4. salir"
             read *, option
             select case(option)
                 case(1)
                     print *, "---------------------------------"
-                    print *, "Generando reportes"
+                    print *, "Generando arboles"
                     print *, "---------------------------------"    
                     call this%ImagesTree%graphImages("images")   !4.3.1
                     call this%LayersTree%graphABBTree("layers")   !4.3.2
                     call this%albums%graphAlbumes("albumes") !4.3.3
                     print *, "---------------------------------"
-                    print *, "Reportes generados"
+                    print *, "arboles generados"
                     print *, "---------------------------------"
                 case(2)
-                    found = .false.
-                    do while (.not. found) !4.3.4
-                        if (associated(this%LayersTree%root)) then
-                            print *, "---------------------------------"
-                            print *, "que capa desea graficar? (ingresar id de la capa)"
-                            call cola%cleanQueue()
-                            call this%LayersTree%inorderABB(this%LayersTree%root,cola)
-                            call cola%printQueue()
-                            print *, "---------------------------------"
-                            print *, "arriba estan las capas disponibles (ingrese '-1' para salir)"
-                            print *, "---------------------------------"
-                            read *, response
-                            if (response /= -1) then
-                                layertemp => this%LayersTree%searchLayer(response)
-                                actPixel => layertemp%pixels%head
-                                do while (associated(actPixel))
-                                    i = actPixel%row
-                                    j = actPixel%col
-                                    call actmatrix%insert(i=i,j=j,color=actPixel%color)
-                                    actPixel => actPixel%next
-                                end do
-                                call actmatrix%graphMatrix("matrix_layer")
-                                call actmatrix%cleanMatrix()
-                            else
-                                return
-                            end if
-                        else
-                            print *, "No hay capas"
-                            exit
-                        end if
-                    end do
+                    call this%por_capa(acumulativo=0)!4.1.3
                 case(3)
-                    print *, "---------------------------------"
-                    print *, "menu de graficacion de imagenes"
-                    print *, "---------------------------------"
-                    print *, "1. por recorrido limitado"
-                    print *, "2. por arbol de imagenes"
-                    print *, "3. por capa"
-                    print *, "4. salir"
-                    read *, response
-                    select case(response)
-                        case(1)
-                            call this%por_recorrido_limitado()!4.1.1
-                        case(2)
-                            call this%por_arbol_de_imagenes()!4.1.2
-                        case(3)
-                            ! call this%por_capa()!4.1.3
-                        case(4)
-                            return
-                        case default
-                            print *, "Opcion no valida"
-                    end select
+                    call this%reportes_de_usuario()!4.1.4
                 case(4)
                     found = .true.
                 case default
@@ -411,6 +404,62 @@ module module_ordinal_user
             end select
         end do
     end subroutine ver_reportes_estructuras
+
+    subroutine navegacion_gestion_imagenes(this)
+        class(ordinal_user), intent(inout) :: this
+        type(imageList), pointer :: currentImage
+        type(album), pointer :: currentAlbum
+        integer :: id
+        integer :: option
+        logical :: found
+        found = .false.
+        do while (.not. found)
+            print *, "---------------------------------"
+            print *, "Menu de navegacion de imagenes"
+            print *, "---------------------------------"
+            print *, "1. menu de graficacion de imagenes"
+            print *, "2. eliminar imagen"
+            print *, "3. salir"
+            print *, "---------------------------------"
+            read *, option
+            select case(option)
+                case(1)
+                    print *, "---------------------------------"
+                    print *, "menu de graficacion de imagenes"
+                    print *, "---------------------------------"
+                    print *, "1. por recorrido limitado"
+                    print *, "2. por arbol de imagenes"
+                    print *, "3. por capa"
+                    print *, "4. salir"
+                    read *, option
+                    select case(option)
+                        case(1)
+                            call this%por_recorrido_limitado()!4.1.1
+                        case(2)
+                            call this%por_arbol_de_imagenes()!4.1.2
+                        case(3)
+                            call this%por_capa(acumulativo=1)!4.1.3
+                        case(4)
+                            return
+                        case default
+                            print *, "Opcion no valida"
+                    end select
+                case(2)
+                    print *, "---------------------------------"
+                    print *, "Eliminar imagen"
+                    print *, "---------------------------------"
+                    print *, "ingrese el id de la imagen a eliminar"
+                    read *, id
+                    call this%ImagesTree%deleteImg(id)
+                    print *, "ola"
+                    call this%albums%deleteImageInAllAlbums(id)
+                case(3)
+                    found = .true.
+                case default
+                    print *, "Opcion no valida"
+            end select
+        end do 
+    end subroutine navegacion_gestion_imagenes
 
     subroutine carga_masiva_capas(this)
         class(ordinal_user), intent(inout) :: this
@@ -462,6 +511,7 @@ module module_ordinal_user
         integer :: id,num,i
         logical :: salir
         salir = .false.
+        actmatrix%root => null()
         print *, "---------------------------------"
         print *, "Menu de recorrido limitado"
         print *, "---------------------------------"
@@ -534,6 +584,7 @@ module module_ordinal_user
         integer :: response
         logical :: found
         found = .false.
+        actmatrix%root => null()
         do while (.not. found) !4.3.5
             ! print *, "mire la grafica de las capas y las imagenes en la carpeta images"
             print *, "---------------------------------"
@@ -554,13 +605,95 @@ module module_ordinal_user
                 return
             end if
         end do
-
-
-
-
     end subroutine por_arbol_de_imagenes
 
+    subroutine por_capa(this,acumulativo)
+        class(ordinal_user), intent(in) :: this
+        integer, intent(in) :: acumulativo
+        type(matrix) :: actmatrix
+        type(queue) :: cola
+        type(layer), pointer :: layertemp
+        type(pixel), pointer :: actPixel
+        integer :: response
+        logical :: found
+        integer :: i,j
+        found = .false.
+        actmatrix%root => null()
+        do while (.not. found) !4.3.4
+            if (associated(this%LayersTree%root)) then
+                print *, "---------------------------------"
+                print *, "que capa desea graficar? (ingresar id de la capa)"
+                call cola%cleanQueue()
+                call this%LayersTree%inorderABB(this%LayersTree%root,cola)
+                call cola%printQueue()
+                print *, "---------------------------------"
+                print *, "arriba estan las capas disponibles (ingrese '-1' para salir)"
+                print *, "---------------------------------"
+                read *, response
+                if (response /= -1) then
+                    layertemp => this%LayersTree%searchLayer(response)
+                    actPixel => layertemp%pixels%head
+                    do while (associated(actPixel))
+                        i = actPixel%row
+                        j = actPixel%col
+                        call actmatrix%insert(i=i,j=j,color=actPixel%color)
+                        actPixel => actPixel%next
+                    end do
+                    call actmatrix%graphTable(filename="matrix_layer",text=" ")
+                    if (acumulativo /= 1) then
+                        call actmatrix%cleanMatrix()
+                    end if
+                else
+                    return
+                end if
+            else
+                print *, "No hay capas"
+                exit
+            end if
+        end do
+    end subroutine por_capa
+
+    subroutine reportes_de_usuario(this)
+        class(ordinal_user), intent(in) :: this
+        type(queue) :: cola
+        integer :: num_images
+        print *, "---------------------------------"
+        print *, "Reportes de usuario"
+        print *, "---------------------------------"
+        print *, "usuario: ", this%name
+        print *, "DPI: ", this%DPI
+        print *, "password: ", this%password
+        print *, "---------------------------------"    
+        print *, "top 5 imagenes con mas numeros de capas"
+        call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
+        num_images = cola%getQueueSize()
+        call this%ImagesTree%top_five_images_with_more_layers(cola,num_images)
+        call cola%cleanQueue()
+        print *, "---------------------------------"
+        print *, "todas las capas que son hojas"
+        call this%LayersTree%leaf_layers(this%layersTree%root)
+        print *, ""
+        print *, "---------------------------------"
+        print *, "profundidad de arbol de capas"
+        print *, "profundiadad", this%LayersTree%profundidad
+        print *, "---------------------------------"
+        print *, "--------------capas--------------"
+        call this%LayersTree%preorderABB(this%LayersTree%root,cola)
+        write(*,"(A)", advance='no') "preorden"
+        call cola%printQueue()
+        call cola%cleanQueue()
+        call this%LayersTree%inorderABB(this%LayersTree%root,cola)
+        write(*,"(A)", advance='no') "inorden"  
+        call cola%printQueue()
+        call cola%cleanQueue()
+        call this%LayersTree%postorderABB(this%LayersTree%root,cola)
+        write(*,"(A)", advance='no') "postorden"
+        call cola%printQueue()
+        print *, "---------------------------------"
+    end subroutine reportes_de_usuario
 end module
+
+
 
 module module_btree
     use module_ordinal_user

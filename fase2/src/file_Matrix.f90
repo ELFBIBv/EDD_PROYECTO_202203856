@@ -56,6 +56,7 @@ module module_Matrix
         new = node(i=i, j=j, color=color)
         if(.not. associated(this%root)) then
             allocate(this%root)
+            print *, "Creando nodo raiz"
             this%root = node(i=-1, j=-1, color="#FFFFFF")
         end if
         row => this%searchRow(i)
@@ -81,25 +82,29 @@ module module_Matrix
 
         type(node), pointer :: actual
         actual => this%root
-
         do while(associated(actual))
-            if(actual%j == j) return
+            if(actual%j == j) then 
+                return
+            end if 
             actual => actual%right
         end do
+        actual => null()
     end function searchColumn
 
     !vamos a obtener la fila principal
     function searchRow(this, i) result(actual)
-        class(matrix), intent(in) :: this
+        class(matrix), intent(inout) :: this
         integer, intent(in) :: i
 
         type(node), pointer :: actual
         actual => this%root
-
         do while(associated(actual))
-            if(actual%i == i) return
+            if(actual%i == i) then
+                return
+            end if 
             actual => actual%down
         end do
+        actual => null()
     end function searchRow
     
     !vamos a verificar si el nodo existe
@@ -252,7 +257,7 @@ module module_Matrix
         type(node), pointer :: column
         type(node), pointer :: val
         rowHeader => this%root
-
+        val => null()
         do while(associated(rowHeader))
             if(rowHeader%i == i) then
                 column => rowHeader
@@ -265,7 +270,6 @@ module module_Matrix
                     column => column%right
                 end do
                 print *, "No existe el nodo, (getValue Matrix)"
-                val => null()
                 return
             end if
             rowHeader => rowHeader%down
@@ -389,21 +393,28 @@ module module_Matrix
         write(unit, '(A)') "digraph{"
         write(unit, '(A)') "  node [ shape=plaintext fontname=Helvetica ]"
         write(unit, '(A)') ""
+        print *, "checpoint 3"
         write(unit, '(A)') '  a [ label="' // trim(adjustl(text)) // '"]'
         write(unit, '(A)') "  b [ label = <"
         write(unit, '(A)') "    <table border=""0"" cellborder=""0"" cellspacing=""0"" bgcolor=""white"">"
+        print *, "checpoint 4"
         do i = 0, this%height
+            print *, "checpoint 5"
             write(unit, '(A)') "      <tr>"
             do j = 0, this%width
+                print *, "checpoint 6"
                 val => this%getValue(i, j)
+                print *, "checpoint 7"
                 if (.not. associated(val)) then
                     write(unit, '(A)') "        <td></td>"
                 else
                     write(unit, '(A)') "        <td bgcolor=""" // trim(val%color) // """></td>"
                 end if
             end do
+            print *, "checpoint 8"
             write(unit, '(A)') "      </tr>"
         end do
+        print *, "checpoint 9"
         write(unit, '(A)') "    </table>"
         write(unit, '(A)') "  > ]"
         write(unit, '(A)') ""

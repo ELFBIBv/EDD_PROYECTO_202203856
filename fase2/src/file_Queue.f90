@@ -14,6 +14,7 @@ module module_Queue
         procedure :: isEmpty
         procedure :: printQueue
         procedure :: cleanQueue
+        procedure :: getQueueSize
     end type queue
 
     contains
@@ -70,4 +71,16 @@ module module_Queue
             deallocate(tmp)
         end do
     end subroutine cleanQueue
+
+    function getQueueSize(this) result(size)
+        class(queue), intent(in) :: this
+        type(node), pointer :: tmp
+        integer :: size
+        size = 0
+        tmp => this%head
+        do while (associated(tmp))
+            size = size + 1
+            tmp => tmp%next
+        end do
+    end function getQueueSize
 end module module_Queue

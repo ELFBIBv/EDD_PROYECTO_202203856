@@ -55,6 +55,8 @@ module module_abbtree_layers
 
     type :: abbtree_layers
             type(layer), pointer :: root => null()
+            integer :: profundidad = 0
+            integer :: num_layers = 0
         contains
             procedure :: insertLayer
             procedure :: deleteLayer
@@ -64,6 +66,8 @@ module module_abbtree_layers
             procedure :: graphABBTree
             procedure :: searchLayer
             procedure :: searchLayer_Rec
+            procedure :: insertRec
+            procedure :: leaf_layers
     end type abbtree_layers
 
     contains
@@ -74,33 +78,44 @@ module module_abbtree_layers
         integer, intent(in) :: id
         type(pixelList), intent(in) :: pixels
         type(layer), pointer :: capa
+        integer :: profundidad
+        profundidad = 0
         allocate(capa)
         capa = layer(id=id, pixels=pixels)
         if (.not. associated(this%root)) then
             this%root => capa
         else
-            call insertRec(this%root, capa)
+            call this%insertRec(this%root, capa,profundidad)
+            if (profundidad > this%profundidad) then
+                this%profundidad = profundidad
+            end if
         end if
     end subroutine insertLayer
 
     !no usar por separado
-    recursive subroutine insertRec(root, capa)
+    recursive subroutine insertRec(this,root, capa,profundidad)
+        class(abbtree_layers), intent(inout) :: this
         type(layer), pointer, intent(inout) :: root
         class(layer),pointer, intent(in) :: capa
+        integer, intent(inout) :: profundidad
         ! print *, "capa: ", capa%id, "capa2: ", root%id
         if (capa%id < root%id) then
+            profundidad = profundidad + 1
             if (.not. associated(root%left)) then
+                this%num_layers = this%num_layers + 1
                 allocate(root%left)
                 root%left => capa
             else
-                call insertRec(root%left, capa)
+                call this%insertRec(root%left, capa,profundidad)
             end if
         else if (capa%id > root%id) then
+            profundidad = profundidad + 1
             if (.not. associated(root%right)) then
+                this%num_layers = this%num_layers + 1
                 allocate(root%right)
                 root%right => capa
             else
-                call insertRec(root%right, capa)
+                call this%insertRec(root%right, capa,profundidad)
             end if
         else if (capa%id == root%id) then
             !revisar esto
@@ -254,7 +269,6 @@ module module_abbtree_layers
         type(layer), pointer :: root
         type(layer), intent(in) :: temp
         class(layer), pointer :: res
-        ! print *, "id: ", root%id
         if (.not. associated(root)) then
             print *, "No se encontro la capa ", temp%id
             return
@@ -265,10 +279,25 @@ module module_abbtree_layers
         else if (temp%id > root%id) then
             res => this%searchLayer_Rec(root%right, temp)
         else
-            print *, "Se encontro la capa ", root%id
             res => root
         end if
     end function searchLayer_Rec
+
+    subroutine leaf_layers(this, tmp)
+        class(abbtree_layers), intent(in) :: this
+        type(layer), intent(in), pointer :: tmp
+        if(associated(tmp)) then
+            call this%leaf_layers(tmp%left)
+            if (.not. associated(tmp%left) .and. .not. associated(tmp%right)) then
+                write(*,"(I4)", advance='no') tmp%id
+            end if 
+            call this%leaf_layers(tmp%right)
+        else
+            return
+        end if
+    end subroutine leaf_layers
+
+
 end module module_abbtree_layers
 
 !este es para leer las capas del archivo json
@@ -337,7 +366,6 @@ module module_jsonReader_layers
                     color = this%getText_abbjson(poss=j,text="color",actualchild=pixelatribute)
                     call list%insertPixel(row=fila,col=columna,color=color)
                 end do
-                print *, "voy aca"
                 call tree%insertLayer(id=id,pixels=list)
                 list = pixelList()
             end if
@@ -371,12 +399,12 @@ module module_jsonReader_layers
         logical :: found
 
         found = .false.
-        call this%jsonc%get_child(actualchild, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'text' del hijo actual
+        call this%jsonc%get_child(actualchild, text, this%attributePointer, found = found)
         if (.not.found) then
             print *, "No se obtuvo el texto, poss:", poss 
             valueret = "error"
         end if
-        call this%jsonc%get(this%attributePointer, valueret)  ! Se obtiene el valor y se asigna a la variable 'valueret'
+        call this%jsonc%get(this%attributePointer, valueret)
         
     end function getText_abbjson
     

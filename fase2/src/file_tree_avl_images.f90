@@ -31,6 +31,8 @@ module module_avlTree_images
         procedure :: deleteImg
         procedure :: deleteImg_rec !no usar por separado
         procedure :: breadthFirstMatrix
+        procedure :: top_five_images_with_more_layers
+
     end type
 
     contains
@@ -38,7 +40,12 @@ module module_avlTree_images
         class(avlTree_images), intent(inout) :: this
         integer, intent(in) :: id
         type(abbtree_layers), intent(in) :: abb
-        type(image), pointer :: tmp
+        type(image), pointer :: tmp,test
+        test => this%searchImage(id)
+        if (associated(test)) then
+            print *, "La imagen ya existe"
+            return
+        end if
         if(associated(this%root)) then
             call this%insertImage_rec(tmp=this%root,id=id,abb=abb)
         else
@@ -230,9 +237,7 @@ module module_avlTree_images
         class(avlTree_images), intent(in) :: this
         type(image), pointer :: res
         integer, intent(in) :: id
-        ! type(image) :: temp
-        ! temp = image(id=id)
-        ! res => this%searchImage_Rec(this%root, temp)
+        res => null()
         res => this%searchImage_Rec(this%root, id)
     end function searchImage
 
@@ -246,6 +251,7 @@ module module_avlTree_images
         class(image), pointer :: res
         if (.not. associated(root)) then
             print *, "No se encontro la imagen ", id
+            res => null()
             return
         end if
 
@@ -277,7 +283,7 @@ module module_avlTree_images
             res => root
             return
         end if 
-
+        print *, "checkpoint 1"
         if(id < root%id) then
             root%left => this%deleteImg_rec(root%left, id)
 
@@ -299,24 +305,37 @@ module module_avlTree_images
                 root%left => this%deleteImg_rec(root%left, temp%id)
             end if
         end if
-
+        print *, "checkpoint 2"
         res => root
         if(.not. associated(root)) return
-
-        root%height = this%getmax(root%left%height, root%right%height) + 1
-
+        print  *,"checkpoint 3"
+        if (.not. associated(root%left) .and. .not. associated(root%right)) then
+            root%height = 0
+        else
+            if (associated(root%left) .and. associated(root%right)) then
+                root%height = this%getmax(root%left%height, root%right%height) + 1
+            else if (associated(root%left)) then
+                root%height = root%left%height + 1
+            else
+                root%height = root%right%height + 1
+            end if
+        end if
+        print *, "checkpoint 4"
         if(getBalance(root) > 1) then
+            print *, "checkpoint 4.1"
             if(getBalance(root%right) < 0) then
                 ! root%right => rightRotation(root%right)
                 ! root => leftRotation(root)
+                print *, "checkpoint 4.2"
                 root=>this%drr(root)
 
             else
                 ! root => leftRotation(root)
+                print *, "checkpoint 4.3"
                 root => this%srr(root)
             end if
         end if
-
+        print  *,"checkpoint 5"
         if(getBalance(root) < -1) then
             if(getBalance(root%left) > 0) then
                 ! root%left => leftRotation(root%left)
@@ -328,14 +347,28 @@ module module_avlTree_images
                 root => this%srl(root)
             end if
         end if
+        print  *,"checkpoint 6"
         res => root
     end function deleteImg_rec
 
     function getBalance(root) result(res)
-        type(image), intent(in) :: root
+        type(image),pointer, intent(in) :: root
 
         integer :: res
-        res = root%right%height - root%left%height
+        if (.not. associated(root)) then
+            res = 0
+            return
+        end if
+        if (.not. associated(root%left) .and. .not. associated(root%right)) then
+            res = 0
+        else if (.not. associated(root%left)) then
+            res = -root%right%height
+        else if (.not. associated(root%right)) then
+            res = root%left%height
+        else   
+            res = root%right%height - root%left%height
+        end if
+
     end function getBalance
 
     recursive subroutine getMajorOfMinorsImages(root, major)
@@ -356,37 +389,99 @@ module module_avlTree_images
         type(abbtree_layers) :: layersTree
         type(pixel), pointer :: actualPixel
         type(Queue) :: queue
-        character(8) :: color
+        character(7) :: color
         integer :: i,j,id
         img_temp => this%searchImage(idImage)
-        layersTree = img_temp%abb
+        ! layersTree = img_temp%abb
+        if (.not. associated(img_temp)) then
+            print *, "No se encontro la imagen"
+            return
+        end if
         actualLayer => img_temp%abb%root
         id = actualLayer%id
         call queue%enqueue(id)
+        print *, "checkpoint 1"
         do while (.not. queue%isEmpty())
             call queue%printQueue()
             id = queue%dequeue()
-            actualLayer => layersTree%searchLayer(id)
+            print *, "checkpoint 2"
+            actualLayer => img_temp%abb%searchLayer(id)
             ! este es el visit()
             actualPixel => actualLayer%pixels%head
+            print *, "checkpoint 3"
             do while (associated(actualPixel))
+                print *, "checkpoint 3.1"
                 i=actualPixel%row
+                print *, "checkpoint 3.2"
                 j=actualPixel%col
-                color = actualPixel%color
+                color = trim(adjustl(actualPixel%color))
+                print *, "fila: ", i, " columna: ", j, " color: ", color
+                print *, "checkpoint 3.3"
                 call actualMatrix%insert(i=i,j=j,color=color)
+                print *, "checkpoint 3.4"
                 actualPixel => actualPixel%next
             end do
             !
+            print *, "checkpoint 4"
             if (associated(actualLayer%left)) then
                 id = actualLayer%left%id
                 call queue%enqueue(id)
             end if
+            print *, "checkpoint 5"
             if (associated(actualLayer%right)) then
                 id = actualLayer%right%id
                 call queue%enqueue(id)
             end if
         end do
     end subroutine breadthFirstMatrix
+
+    subroutine top_five_images_with_more_layers(this,cola,num_images)
+        class(avlTree_images), intent(in) :: this
+        type(Queue), intent(inout) :: cola
+        integer, intent(in) :: num_images
+        type(image), pointer :: img_temp
+        type(queue) :: cola_aux
+        character(:), allocatable :: text
+        integer :: array(1:num_images),array_sizes(1:num_images)
+        integer :: i,j,key,key2,tam
+        logical :: fin
+        fin = .false.
+        call cola%printQueue()
+        if (.not. associated(this%root)) then
+            print *, "No hay imagenes"
+            return
+        end if
+        do i = 1, num_images
+            if (i > num_images) then
+                fin = .true.
+                exit
+            end if
+            array(i) = cola%dequeue()
+            img_temp => this%searchImage(array(i))
+            if (.not. associated(img_temp)) then
+                print *, "No se encontro la imagen"
+                return
+            end if
+            array_sizes(i) = img_temp%abb%num_layers
+        end do
+        do i = 2, num_images
+            key = array_sizes(i)
+            key2 = array(i)
+            j = i - 1
+            do while (j>=1 .and. array_sizes(j) > key)
+                array_sizes(j+1) = array_sizes(j)
+                array(j+1) = array(j)
+                j = j - 1
+            end do
+            array_sizes(j+1) = key
+            array(j+1) = key2
+        end do
+
+        do i = 1, num_images
+            print *, "Imagen: ", array(num_images-i+1), " Capas: ", array_sizes(num_images-i+1)
+        end do
+
+    end subroutine top_five_images_with_more_layers
 
 end module module_avlTree_images
 
