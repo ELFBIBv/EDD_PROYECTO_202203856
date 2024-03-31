@@ -151,9 +151,10 @@ module module_admin_user
     !insertar un usuario en el arbol B de usuarios
     subroutine insertar_usuario(this)
         class(admin_user), intent(inout) :: this
-        character(:),allocatable :: nombre
+        type(ordinal_user) :: user
+        character(50) :: nombre
         integer(kind=8) :: DPI  
-        character(:),allocatable :: password
+        character(50) :: password
         print *, "---------------------------------"
         print *, "Ingrese el nombre del usuario"
         read *, nombre
@@ -161,10 +162,17 @@ module module_admin_user
         read *, DPI
         print *, "Ingrese la contraseña del usuario"
         read *, password
-        call this%treeUsers%insert(ordinal_user(nombre,DPI, password))
-        print *, "---------------------------------"
-        print *, "Usuario insertado"
-        print *, "---------------------------------"
+        if (DPI<9999999999999_8 .and. DPI>999999999999_8) then
+            user = ordinal_user(nombre, DPI, password)
+            call this%treeUsers%insert(user)
+            print *, "---------------------------------"
+            print *, "Usuario insertado"
+            print *, "---------------------------------"
+        else
+            print *, "---------------------------------"
+            print *, "DPI no valido"
+            print *, "---------------------------------"
+        end if
     end subroutine
 
     !eliminar un usuario en el arbol B de usuarios
@@ -185,7 +193,7 @@ module module_admin_user
         class(admin_user), intent(inout) :: this
         integer(kind=8):: DPI,option
         character(:),allocatable :: nombre
-        character(:),allocatable :: password
+        character(50) :: password
         type(ordinal_user), pointer :: user
         logical :: finaly, found
         finaly = .false.

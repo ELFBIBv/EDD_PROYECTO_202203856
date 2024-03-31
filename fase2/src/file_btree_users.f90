@@ -1,18 +1,19 @@
 module linkedListImages
     implicit none
     type image
-    integer :: id
-    type(image), pointer :: next => null()
+        integer :: id
+        type(image), pointer :: next => null()
     end type
 
     type imageList
-    type(image), pointer :: head => null()
-    type(image), pointer :: tail => null()
+        type(image), pointer :: head => null()
+        type(image), pointer :: tail => null()
     contains
-    procedure :: addImage
-    procedure :: deleteImage
-    procedure :: searchImage
+        procedure :: addImage
+        procedure :: deleteImage
+        procedure :: existID
     end type
+
     contains
     subroutine addImage(this,id)
         class(imageList), intent(inout) :: this
@@ -50,7 +51,7 @@ module linkedListImages
         end do
     end subroutine deleteImage
     
-    subroutine searchImage(this,id)
+    subroutine existID(this,id)
         class(imageList), intent(in) :: this
         integer, intent(in) :: id
         type(image),pointer :: current
@@ -63,7 +64,7 @@ module linkedListImages
             current => current%next
         end do
         print *, "Image not found"
-    end subroutine searchImage
+    end subroutine existID
 end module linkedListImages
 
 module linkedListAlbum
@@ -129,33 +130,51 @@ module linkedListAlbum
         character(len=*), intent(in) :: filename
         type(album), pointer :: current
         type(image), pointer :: currentImage
-        character(:), allocatable :: path
+        character(:), allocatable :: path,rank
+        character(:), allocatable :: conexion
         integer :: file
         path = "images\"//trim(adjustl(filename))//".dot"
         open(file, file=path, status="replace")
         write(file, *) 'digraph G {'
-        do while (associated(current))
-            current => this%head
-            write(file, *) '"Album', trim(adjustl(current%name)), '" [label="', trim(adjustl(current%name)),'"];'
-            if (associated(current%images%head)) then
-                currentImage => current%images%head
-                write(file, *) '"Image', currentImage%id, '" [label="', currentImage%id,'"];'
-                write(file, *) '"Album', trim(adjustl(current%name)), '" -> "Image', currentImage%id, '";'
-                do while (associated(currentImage%next))
-                    write(file, *) '"Image', currentImage%next%id, '" [label="', currentImage%next%id,'"];'
-                    write(file, *) '"Image', currentImage%id, '" -> "Image', currentImage%next%id, '";'
-                    currentImage => currentImage%next
-                end do
-            end if
-            if (associated(current%next)) then
+        write(file, *) 'node [shape=box];'
+        current => this%head
+        if (associated(current)) then
+            rank = "{rank=same"
+            do while (associated(current))
                 write(file, *) '"Album', trim(adjustl(current%name)), '" [label="', trim(adjustl(current%name)),'"];'
-                write(file, *) '"Album', trim(adjustl(current%name)), '" -> "Album', trim(adjustl(current%next%name)), '";'
-            end if
-            current => current%next
-        end do
+                rank = trim(adjustl(rank))//';"Album'//trim(adjustl(current%name))//'"'
+                currentImage => current%images%head
+                if (associated(currentImage)) then
+                    write(file, *) '"Image', currentImage%id, '" [label="', currentImage%id,'"];'
+                    write(file, *) '"Album', trim(adjustl(current%name)), '" -> "Image', currentImage%id, '";'
+                    ! rank = trim(adjustl(rank))//'"Album"'//trim(adjustl(current%name))//'"'
+                    do while (associated(currentImage%next))
+                        write(file, *) '"Image', currentImage%next%id, '" [label="', currentImage%next%id,'"];'
+                        write(file, *) '"Image', currentImage%id, '" -> "Image', currentImage%next%id, '";'
+                        currentImage => currentImage%next
+                    end do
+                else 
+                    print *, "No images in album"
+                end if
+                if (associated(current%next)) then
+                    write(file, *) '"Album', trim(adjustl(current%name)), '" [label="', trim(adjustl(current%name)),'"];'
+                    conexion = '"Album'// trim(adjustl(current%name))// '" -> "Album'// trim(adjustl(current%next%name))
+                    write(file, *) conexion// '"[color=blue];'
+                    write(file, *) conexion// '"[color=red][dir = back];'
+                end if
+                current => current%next
+            end do
+            write(file, *) rank, "}"
+        else
+            write(file, *) '"empty" [label="Empty albumes", shape=box];'
+        end if
         write(file, *) '}'
         close(file)
-        call execute_command_line(trim("dot -Tpng images\albumes.dot -o images\albumes.png"))
+        call execute_command_line("dot -Tpng images\albumes.dot -o images\albumes.png")
+        !windows
+        call system("start images\"//trim(adjustl(filename))//".png")
+        ! linux 
+        ! call system("xdg-open images\"//trim(adjustl(filename))//".png")
     end subroutine graphAlbumes
 
     subroutine addImageInAlbum(this,nameAlbum,idImage)
@@ -187,27 +206,359 @@ module linkedListAlbum
 
 end module linkedListAlbum
 
+!este es para leer los albumes del archivo json
+module module_jsonReader_albums
+    use json_module
+    use linkedListAlbum
+    use linkedListImages
+    implicit none
+    
+    type, public :: jsonReader_albumsJson
+        type(json_file) :: json
+        type(json_value), pointer :: listPointer, personPointer, attributePointer
+        type(json_core) :: jsonc
+        character(:), allocatable :: filename
+        logical :: found
+        integer :: size
+        contains
+        procedure :: readJson_albumsJson
+        procedure :: getText_albums
+        procedure :: Inicialice_albumsJson
+    end type jsonReader_albumsJson
+
+    contains
+    
+    subroutine readJson_albumsJson(this,filename,albums)
+        class(jsonReader_albumsJson), intent(inout) :: this
+        character(len=*), intent(in) :: filename
+        type(albumList), intent(inout) :: albums
+        type(album), pointer :: currentAlbum
+        type(imageList), pointer :: images
+        integer :: i,num,currentnum,tempid        ! Se declaran variables enteras
+        character(:),allocatable :: nombre
+        integer, dimension(:), allocatable :: array
+        logical :: found
+        this%filename = filename
+        call this%Inicialice_albumsJson()  ! Se inicializa el módulo JSON
+        do i = 1, this%size                          ! Se inicia un bucle sobre el número de elementos en el JSON
+            nombre = this%getText_albums(poss=i,text="nombre_album") 
+            call this%jsonc%get_child(this%listPointer, i, this%personPointer, found = found)
+            call this%jsonc%get_child(this%personPointer, "imgs", this%attributePointer, found = found)
+            print *, "album: ", nombre
+            call albums%addAlbum(name=nombre)
+            if (found) then
+                call this%jsonc%get(this%attributePointer, array)
+                currentAlbum => albums%searchAlbum(nombre)
+                print *, "album: ", nombre
+                do num = 1, size(array)
+                    print *, "imagen: ", array(num)
+                    call currentAlbum%images%addImage(array(num))
+                end do
+            end if
+        end do
+    end subroutine
+
+    function getText_albums(this,poss,text) result(valueret)
+        class(jsonReader_albumsJson), intent(inout) :: this
+        integer, intent(in) :: poss
+        character(len=*), intent(in) :: text
+        character(:), allocatable :: valueret
+        integer :: i, size        ! Se declaran variables enteras
+        logical :: found
+
+        found = .false.
+        call this%jsonc%get_child(this%listPointer, poss, this%personPointer, found = found)  ! Se obtiene el i-ésimo hijo de listPointer
+        call this%jsonc%get_child(this%personPointer, text, this%attributePointer, found = found)  ! Se obtiene el valor asociado con la clave 'nombre' del hijo actual
+        if (found) then
+            call this%jsonc%get(this%attributePointer, valueret)  ! Se obtiene el valor y se asigna a la variable 'nombre'
+        end if
+        
+    end function getText_albums
+
+    subroutine Inicialice_albumsJson(this)
+        class(jsonReader_albumsJson), intent(inout) :: this
+        call this%json%initialize()    ! Se inicializa el módulo JSON
+        call this%json%load(filename=this%filename)  ! Se carga el archivo JSON llamado 'data.json'
+        call this%json%info('',n_children=this%size)
+        call this%json%get_core(this%jsonc)               ! Se obtiene el núcleo JSON para acceder a sus funciones básicas
+        call this%json%get('', this%listPointer, this%found)
+        if (this%found) then
+            print *, "Se encontro el archivo"
+        else
+            print *, "No se encontro el archivo"
+        end if
+    end subroutine Inicialice_albumsJson
+
+end module module_jsonReader_albums
+
 module module_ordinal_user
     use module_abbtree_layers
+    use module_jsonReader_layers
     use module_avlTree_images
+    use module_jsonReader_images
+    use linkedListAlbum
+    use module_jsonReader_albums
+    use module_Matrix
+    use module_queue
     implicit none
 
     type ordinal_user
     character(:), allocatable :: name
     integer(kind=8), allocatable :: DPI
     character(:), allocatable :: password
-    type(abbtree_layers),allocatable :: PrincipalLayersTree
-    type(avlTree_images),allocatable :: PrincipalImagesTree
+    type(abbtree_layers) :: LayersTree
+    type(avlTree_images) :: ImagesTree
+    type(albumList) :: albums
 
     contains
-    ! procedure :: ver_reportes_estructuras
+    procedure :: ver_reportes_estructuras
     ! procedure :: navegacion_imgs_gestion_imgs
-    ! procedure :: carga_masiva_capas
-    ! procedure :: carga_masiva_imagenes
-    ! procedure :: carga_masiva_albumes
-    end type
+    procedure :: carga_masiva_capas
+    procedure :: carga_masiva_imagenes
+    procedure :: carga_masiva_albumes
+    procedure :: por_recorrido_limitado! no usar este
+    procedure :: por_arbol_de_imagenes! no usar este
+    ! procedure :: por_capa ! no usar este
+    end type ordinal_user
 
     contains
+    subroutine ver_reportes_estructuras(this)
+        class(ordinal_user), intent(in) :: this
+        type(pixel), pointer :: actPixel
+        type(matrix) :: actmatrix
+        type(layer), pointer :: layertemp
+        type(queue) :: cola
+        logical :: found
+        integer :: response,i,j,option
+        found = .false.
+        do while (.not. found)
+            print *, "---------------------------------"
+            print *, "Menu de reportes"
+            print *, "---------------------------------"
+            print *, "1. graficar arboles"
+            print *, "2. graficar matriz de una capa"
+            print *, "3. graficar imagen"
+            print *, "4. salir"
+            read *, option
+            select case(option)
+                case(1)
+                    print *, "---------------------------------"
+                    print *, "Generando reportes"
+                    print *, "---------------------------------"    
+                    call this%ImagesTree%graphImages("images")   !4.3.1
+                    call this%LayersTree%graphABBTree("layers")   !4.3.2
+                    call this%albums%graphAlbumes("albumes") !4.3.3
+                    print *, "---------------------------------"
+                    print *, "Reportes generados"
+                    print *, "---------------------------------"
+                case(2)
+                    found = .false.
+                    do while (.not. found) !4.3.4
+                        if (associated(this%LayersTree%root)) then
+                            print *, "---------------------------------"
+                            print *, "que capa desea graficar? (ingresar id de la capa)"
+                            call cola%cleanQueue()
+                            call this%LayersTree%inorderABB(this%LayersTree%root,cola)
+                            call cola%printQueue()
+                            print *, "---------------------------------"
+                            print *, "arriba estan las capas disponibles (ingrese '-1' para salir)"
+                            print *, "---------------------------------"
+                            read *, response
+                            if (response /= -1) then
+                                layertemp => this%LayersTree%searchLayer(response)
+                                actPixel => layertemp%pixels%head
+                                do while (associated(actPixel))
+                                    i = actPixel%row
+                                    j = actPixel%col
+                                    call actmatrix%insert(i=i,j=j,color=actPixel%color)
+                                    actPixel => actPixel%next
+                                end do
+                                call actmatrix%graphMatrix("matrix_layer")
+                                call actmatrix%cleanMatrix()
+                            else
+                                return
+                            end if
+                        else
+                            print *, "No hay capas"
+                            exit
+                        end if
+                    end do
+                case(3)
+                    print *, "---------------------------------"
+                    print *, "menu de graficacion de imagenes"
+                    print *, "---------------------------------"
+                    print *, "1. por recorrido limitado"
+                    print *, "2. por arbol de imagenes"
+                    print *, "3. por capa"
+                    print *, "4. salir"
+                    read *, response
+                    select case(response)
+                        case(1)
+                            call this%por_recorrido_limitado()!4.1.1
+                        case(2)
+                            call this%por_arbol_de_imagenes()!4.1.2
+                        case(3)
+                            ! call this%por_capa()!4.1.3
+                        case(4)
+                            return
+                        case default
+                            print *, "Opcion no valida"
+                    end select
+                case(4)
+                    found = .true.
+                case default
+                    print *, "Opcion no valida"
+            end select
+        end do
+    end subroutine ver_reportes_estructuras
+
+    subroutine carga_masiva_capas(this)
+        class(ordinal_user), intent(inout) :: this
+        type(jsonReader_layers) :: reader
+        print *, "---------------------------------"
+        print *, "Carga masiva de capas"
+        print *, "---------------------------------"
+        call reader%readJson_Layers(filename="imagenmario.json",tree=this%LayersTree)
+        print *, "---------------------------------"
+        print *, "Carga masiva de capas finalizada"
+        print *, "---------------------------------"
+    end subroutine carga_masiva_capas
+
+    subroutine carga_masiva_imagenes(this)
+        class(ordinal_user), intent(inout) :: this
+        type(jsonReader_images) :: reader
+        print *, "---------------------------------"
+        print *, "Carga masiva de imagenes"
+        print *, "---------------------------------"
+        call reader%readJson_Images(filename="img.json",abbPrincipalTree=this%LayersTree,avlPrincipalTree=this%ImagesTree)
+        print *, "---------------------------------"
+        print *, "Carga masiva de imagenes finalizada"
+        print *, "---------------------------------"
+    end subroutine carga_masiva_imagenes
+
+    subroutine carga_masiva_albumes(this)
+        class(ordinal_user), intent(inout) :: this
+        type(jsonReader_albumsJson) :: reader
+        print *, "---------------------------------"
+        print *, "Carga masiva de albumes"
+        print *, "---------------------------------"
+        call reader%readJson_albumsJson(filename="albumes.json",albums=this%albums)
+        print *, "---------------------------------"
+        print *, "Carga masiva de albumes finalizada"
+        print *, "---------------------------------"
+    end subroutine carga_masiva_albumes
+
+    subroutine por_recorrido_limitado(this)
+        class(ordinal_user), intent(in) :: this
+        type(queue) :: cola
+        type(abbtree_layers) :: tree
+        type(pixelList) :: pixels
+        type(matrix) :: actmatrix
+        type(pixel), pointer :: actPixel
+        class(image), pointer :: img
+        type(layer), pointer :: layertemp
+        character(:), allocatable :: recorrido
+        character(15) :: casteo
+        integer :: id,num,i
+        logical :: salir
+        salir = .false.
+        print *, "---------------------------------"
+        print *, "Menu de recorrido limitado"
+        print *, "---------------------------------"
+        print *, "ingrese el id de la imagen a graficar"
+        call cola%cleanQueue()
+        call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
+        call cola%printQueue()
+        print *, "---------------------------------"
+        read *, id
+        img => this%ImagesTree%searchImage(id)
+        if (associated(img)) then
+            tree = img%abb
+            print *, "ingrese el numero de capas a graficar"
+            print *, "si el numero es mayor a la cantidad se graficara todo"
+            read *, num
+            do while (.not. salir)
+                print *, "-------tipo de orden-----------"
+                print *, "1. preorden"
+                print *, "2. inorden"
+                print *, "3. postorden"
+                print *, "4. salir"
+                read *, id
+                select case(id)
+                    case(1)
+                        call cola%cleanQueue()
+                        call tree%preorderABB(tree%root,cola)
+                        recorrido = "preorden: "
+                    case(2)
+                        call cola%cleanQueue()
+                        call tree%inorderABB(tree%root,cola)
+                        recorrido = "inorden: "
+                    case(3)
+                        call cola%cleanQueue()
+                        call tree%postorderABB(tree%root,cola)
+                        recorrido = "postorden: "
+                    case(4)
+                        salir = .true.
+                        return
+                    case default
+                        print *, "Opcion no valida"
+                end select
+                do i = 1, num
+                    if (.not.cola%isEmpty()) then
+                        id = cola%dequeue()
+                        layertemp => tree%searchLayer(id)
+                        actPixel => layertemp%pixels%head
+                        write(casteo,'(I15)') id
+                        if (i==num) then
+                            recorrido = trim(adjustl(recorrido))//" " // trim(adjustl(casteo))
+                        else
+                            recorrido = trim(adjustl(recorrido))//" " // trim(adjustl(casteo))//","
+                        end if
+                        do while (associated(actPixel))
+                            call actmatrix%insert(i=actPixel%row,j=actPixel%col,color=actPixel%color)
+                            actPixel => actPixel%next
+                        end do
+                    else
+                        exit
+                    end if
+                end do
+                call actmatrix%graphTable("img_recorrido_limitado",trim(adjustl(recorrido)))
+            end do
+        end if 
+    end subroutine por_recorrido_limitado
+
+    subroutine por_arbol_de_imagenes(this)
+        class(ordinal_user), intent(in) :: this
+        type(matrix) :: actmatrix
+        type(queue) :: cola
+        integer :: response
+        logical :: found
+        found = .false.
+        do while (.not. found) !4.3.5
+            ! print *, "mire la grafica de las capas y las imagenes en la carpeta images"
+            print *, "---------------------------------"
+            print *, "que imagen desea graficar? (ingresar id de la imagen)"
+            call cola%cleanQueue()
+            call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
+            call cola%printQueue()
+            print *, "---------------------------------"
+            print *, "arriba estan las imagenes disponibles (ingrese '-1' para salir)"
+            print *, "---------------------------------"
+            read *, response
+            if (response /= -1) then
+                call this%ImagesTree%breadthFirstMatrix(actualMatrix=actmatrix,idImage=response)
+                call actmatrix%graphMatrix("matrix_image")
+                call actmatrix%graphTable("image"," ")
+                call actmatrix%cleanMatrix()
+            else
+                return
+            end if
+        end do
+
+
+
+
+    end subroutine por_arbol_de_imagenes
 
 end module
 
@@ -517,7 +868,6 @@ module module_btree
             write(file, *) " ",'"Node', trim(adjustl(node1)), '" -> "Node', trim(adjustl(node2)), '";'
             do i = 0, myNode%num
                 call graphrec(myNode%link(i)%ptr,node2,file)
-                ! write(file, *) "//chekpoint3"
             end do
         end if
     end subroutine graphrec
@@ -538,13 +888,6 @@ module module_btree
                 print *, "DPI", myNode2%val(1)%DPI, "num", myNode2%num, "password", trim(adjustl(myNode2%val(1)%password))
                 do i = 0, myNode2%num-1
                     actualuser => myNode2%val(i+1)
-                    !entra entre los 2 nodos que el cree conveniente es otra forma de escribir
-                        ! if (myNode%val(i)%DPI < DPI < myNode%val(i+1)%DPI) then
-                        ! else if (DPI<myNode%val(i+1)%DPI) then
-                        !     myNode => myNode%link(i)%ptr
-                        !     exit
-                        !si es mayor que el ultimo valor entra al ultimo link
-                    print *, "vuelta", i, "DPI", actualuser%DPI
                     if (DPI<actualuser%DPI) then
                         if (associated(myNode2%link(i)%ptr)) then
                             myNode2 => myNode2%link(i)%ptr

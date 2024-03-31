@@ -1,5 +1,7 @@
 module module_avlTree_images
     use module_abbtree_layers
+    use module_Matrix
+    use module_Queue
     implicit none
     type :: image
         integer :: id
@@ -23,10 +25,12 @@ module module_avlTree_images
         procedure :: drr !no usar por separado
         procedure :: getheight !no usar por separado
         procedure :: getmax !no usar por separado
-        procedure :: dotgen
-        procedure :: dotgen_rec !no usar por separado
+        procedure :: graphImages
+        procedure :: searchImage
+        procedure :: searchImage_rec !no usar por separado
         procedure :: deleteImg
         procedure :: deleteImg_rec !no usar por separado
+        procedure :: breadthFirstMatrix
     end type
 
     contains
@@ -144,40 +148,46 @@ module module_avlTree_images
         getmax = merge(val1, val2, val1 > val2)
     end function getmax
 
-    subroutine preorderAVL(this, tmp)
+    subroutine preorderAVL(this, tmp,cola)
         class(avlTree_images), intent(in) :: this
         type(image), intent(in), pointer :: tmp
-        if( .not. associated(tmp)) then
+        type(Queue), intent(inout) :: cola
+        if(associated(tmp)) then
+            call cola%enqueue(tmp%id)
+            call this%preorderAVL(tmp%left,cola)
+            call this%preorderAVL(tmp%right,cola)
+        else 
             return
         end if
-        write (*, '(1I3)', advance='no') (tmp%id)
-        call this%preorderAVL(tmp%left)
-        call this%preorderAVL(tmp%right)
     end subroutine preorderAVL
 
-    subroutine inorderAVL(this, tmp)
+    subroutine inorderAVL(this, tmp,cola)
         class(avlTree_images), intent(in) :: this
         type(image), intent(in), pointer :: tmp
-        if( .not. associated(tmp)) then
+        type(Queue), intent(inout) :: cola
+        if(associated(tmp)) then
+            call this%inorderAVL(tmp%left,cola)
+            call cola%enqueue(tmp%id)
+            call this%inorderAVL(tmp%right,cola)
+        else
             return
         end if
-        call this%inorderAVL(tmp%left)
-        write (*, '(1I3)', advance='no') (tmp%id)
-        call this%inorderAVL(tmp%right)
     end subroutine inorderAVL
 
-    subroutine postorderAVL(this, tmp)
+    subroutine postorderAVL(this, tmp,cola)
         class(avlTree_images), intent(in) :: this
         type(image), intent(in), pointer :: tmp
+        type(Queue), intent(inout) :: cola
         if( .not. associated(tmp)) then
+            call this%postorderAVL(tmp%left,cola)
+            call this%postorderAVL(tmp%right,cola)
+            call cola%enqueue(tmp%id)
+        else
             return
         end if
-        call this%postorderAVL(tmp%left)
-        call this%postorderAVL(tmp%right)
-        write (*, '(1I3)', advance='no') (tmp%id)
     end subroutine postorderAVL
 
-    subroutine dotgen(this, filename)
+    subroutine graphImages(this, filename)
         class(avlTree_images), intent(in) :: this
         character(len=*), intent(in) :: filename
         character(:),allocatable :: path
@@ -185,14 +195,21 @@ module module_avlTree_images
         path = "images/"//trim(adjustl(filename))//".dot"
         open(file, file=path, status="replace")
         write(file, '(A)') 'digraph{'
-        call this%dotgen_rec(this%root, file)
+        if (associated(this%root)) then
+            call graphImages_rec(this%root, file)
+        else 
+            write(file, '(A)') '"empty" [label="Empty Images", shape=box];'
+        end if
         write(file, '(A)') '}'
         close(file)
-        call execute_command_line("dot -Tsvg images/"//trim(adjustl(filename))//".dot > images/"//trim(adjustl(filename))//".svg")
-    end subroutine dotgen
+        call execute_command_line("dot -Tpng images/"//trim(adjustl(filename))//".dot -o images/"//trim(adjustl(filename))//".png")
+        !windows
+        call system("start images\"//trim(adjustl(filename))//".png")
+        ! linux 
+        ! call system("xdg-open images\"//trim(adjustl(filename))//".png")
+    end subroutine graphImages
 
-    subroutine dotgen_rec(this, tmp, unit)
-        class(avlTree_images), intent(in) :: this
+    recursive subroutine graphImages_rec(tmp, unit)
         type(image), intent(in), pointer :: tmp
         integer, intent(in) :: unit
         if (.not. associated(tmp)) then
@@ -205,9 +222,42 @@ module module_avlTree_images
         if (associated(tmp%right)) then
             write (unit, '(A,I5,A,I5,A)') ' ', tmp%id, ' -> ', tmp%right%id, ';'
         end if
-        call this%dotgen_rec(tmp%left, unit)
-        call this%dotgen_rec(tmp%right, unit)
-    end subroutine dotgen_rec
+        call graphImages_rec(tmp%left, unit)
+        call graphImages_rec(tmp%right, unit)
+    end subroutine graphImages_rec
+
+    function searchImage(this, id) result(res)
+        class(avlTree_images), intent(in) :: this
+        type(image), pointer :: res
+        integer, intent(in) :: id
+        ! type(image) :: temp
+        ! temp = image(id=id)
+        ! res => this%searchImage_Rec(this%root, temp)
+        res => this%searchImage_Rec(this%root, id)
+    end function searchImage
+
+    !no usar por separado   
+    ! recursive function searchImage_Rec(this,root, temp) result(res)
+    recursive function searchImage_Rec(this,root, id) result(res)
+        class(avlTree_images), intent(in) :: this
+        type(image), pointer :: root
+        ! type(image), intent(in) :: temp
+        integer, intent(in) :: id
+        class(image), pointer :: res
+        if (.not. associated(root)) then
+            print *, "No se encontro la imagen ", id
+            return
+        end if
+
+        if (id < root%id) then
+            res => this%searchImage_Rec(root%left, id)
+        else if (id > root%id) then
+            res => this%searchImage_Rec(root%right, id)
+        else
+            print *, "Se encontro la imagen ", root%id
+            res => root
+        end if
+    end function searchImage_Rec
 
     subroutine deleteImg(this, id)
         class(avlTree_images), intent(inout) :: this
@@ -297,6 +347,47 @@ module module_avlTree_images
         end if
     end subroutine getMajorOfMinorsImages
 
+    subroutine breadthFirstMatrix(this,actualMatrix,idImage)
+        class(avlTree_images), intent(in) :: this
+        type(matrix), intent(inout) :: actualMatrix
+        integer, intent(in) :: idImage
+        type(image), pointer :: img_temp
+        type(layer),pointer :: actualLayer
+        type(abbtree_layers) :: layersTree
+        type(pixel), pointer :: actualPixel
+        type(Queue) :: queue
+        character(8) :: color
+        integer :: i,j,id
+        img_temp => this%searchImage(idImage)
+        layersTree = img_temp%abb
+        actualLayer => img_temp%abb%root
+        id = actualLayer%id
+        call queue%enqueue(id)
+        do while (.not. queue%isEmpty())
+            call queue%printQueue()
+            id = queue%dequeue()
+            actualLayer => layersTree%searchLayer(id)
+            ! este es el visit()
+            actualPixel => actualLayer%pixels%head
+            do while (associated(actualPixel))
+                i=actualPixel%row
+                j=actualPixel%col
+                color = actualPixel%color
+                call actualMatrix%insert(i=i,j=j,color=color)
+                actualPixel => actualPixel%next
+            end do
+            !
+            if (associated(actualLayer%left)) then
+                id = actualLayer%left%id
+                call queue%enqueue(id)
+            end if
+            if (associated(actualLayer%right)) then
+                id = actualLayer%right%id
+                call queue%enqueue(id)
+            end if
+        end do
+    end subroutine breadthFirstMatrix
+
 end module module_avlTree_images
 
 !este es para leer las capas del archivo json (tengo que adaptarlo para que lea las imagenes)
@@ -326,13 +417,13 @@ module module_jsonReader_images
         character(len=*), intent(in) :: filename
         type(abbtree_layers), intent(in) :: abbPrincipalTree
         type(avlTree_images), intent(inout) :: avlPrincipalTree
-        type(abbtree_layers) :: abbTemp 
+        type(abbtree_layers) :: abbTemp,cleanabb
         type(image), pointer :: img_temp
         type(layer), pointer :: layer_temp
-        type(layer), pointer :: layer_temp2
-        integer :: i,id,num,currentnum        ! Se declaran variables enteras
+        type(pixelList) :: pixels
+        integer :: i,id,num,currentnum,tempid        ! Se declaran variables enteras
         integer, dimension(:), allocatable :: array
-        character(len=50) :: nombre
+        ! character(len=50) :: nombre
         logical :: found
         this%filename = filename
         call this%Inicialice_avlJson()  ! Se inicializa el módulo JSON
@@ -344,31 +435,21 @@ module module_jsonReader_images
             if (found) then
                 call this%jsonc%get(this%attributePointer, array)
                 do num = 1, size(array)
-                    print *, ""
-                    print *, "Capa: ", array(num)
+                    ! print *, ""
+                    ! print *, "Capa: ", array(num)
                     currentnum = array(num)
                     layer_temp => abbPrincipalTree%searchLayer(currentnum)
                     if (.not. associated(layer_temp)) then
                         print *, "No se encontró la capa, error grave en la lectura del archivo json"
                         return
                     else
-                        ! layer_temp2=layer(id=layer_temp%id,pixels=layer_temp%pixels)
-                        ! do while (associated(layer_temp))
-                        !     print *, "Capaaaaa: ", layer_temp%id
-                        !     layer_temp => layer_temp%right
-                        ! end do
-                        call abbTemp%insertLayer(id=layer_temp%id,pixels=layer_temp%pixels)
+                        tempid = layer_temp%id
+                        pixels = layer_temp%pixels
+                        call abbTemp%insertLayer(id=tempid,pixels=pixels)
                     end if
-                    ! print *, layer_temp%id
-                    ! write(*,"(I5)",advance="no") layer_temp%id
-                    ! write(*,"(I5)",advance="no") array(num)
                 end do
-                write(nombre, '(I5)') id
-                call abbTemp%graphABBTree("vuelta_"//trim(adjustl(nombre)))
-                ! nombre =""
-                ! print *, ""
-                ! call avlPrincipalTree%insertImage(id=id,abb=abbTemp)
-                ! abbTemp = abbtree_layers()
+                call avlPrincipalTree%insertImage(id=id,abb=abbTemp)
+                abbTemp = cleanabb
             end if
         end do
     end subroutine

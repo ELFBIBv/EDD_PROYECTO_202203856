@@ -50,6 +50,7 @@ end module module_layer
 !este no lo he probado del todo
 module module_abbtree_layers
     use module_layer
+    use module_queue
     implicit none
 
     type :: abbtree_layers
@@ -59,7 +60,7 @@ module module_abbtree_layers
             procedure :: deleteLayer
             procedure :: preorderABB
             procedure :: inorderABB
-            procedure :: posorderABB
+            procedure :: postorderABB
             procedure :: graphABBTree
             procedure :: searchLayer
             procedure :: searchLayer_Rec
@@ -151,23 +152,44 @@ module module_abbtree_layers
         res => root
     end function deleteRec
 
-    subroutine preorderABB(this)
+    subroutine preorderABB(this, tmp,cola)
         class(abbtree_layers), intent(in) :: this
-        
-        call preorderRec(this%root)
+        type(layer), intent(in), pointer :: tmp
+        type(Queue), intent(inout) :: cola
+        if(associated(tmp)) then
+            call cola%enqueue(tmp%id)
+            call this%preorderABB(tmp%left,cola)
+            call this%preorderABB(tmp%right,cola)
+        else 
+            return
+        end if
     end subroutine preorderABB
 
-    subroutine inorderABB(this)
+    subroutine inorderABB(this, tmp,cola)
         class(abbtree_layers), intent(in) :: this
-        
-        call inordenRec(this%root)
+        type(layer), intent(in), pointer :: tmp
+        type(Queue), intent(inout) :: cola
+        if(associated(tmp)) then
+            call this%inorderABB(tmp%left,cola)
+            call cola%enqueue(tmp%id)
+            call this%inorderABB(tmp%right,cola)
+        else
+            return
+        end if
     end subroutine inorderABB
 
-    subroutine posorderABB(this)
+    subroutine postorderABB(this, tmp,cola)
         class(abbtree_layers), intent(in) :: this
-        
-        call posordenRec(this%root)
-    end subroutine posorderABB
+        type(layer), intent(in), pointer :: tmp
+        type(Queue), intent(inout) :: cola
+        if(associated(tmp)) then
+            call this%postorderABB(tmp%left,cola)
+            call this%postorderABB(tmp%right,cola)
+            call cola%enqueue(tmp%id)
+        else
+            return
+        end if
+    end subroutine postorderABB
 
     subroutine graphABBTree(this, filename)
         class(abbtree_layers), intent(in) :: this
@@ -177,10 +199,18 @@ module module_abbtree_layers
         path = "images/"//trim(adjustl(filename))//".dot"
         open(file, file=path, status="replace")
         write(file, '(A)') 'digraph{'
-        call graphABBTree_rec(this%root, file)
+        if (associated(this%root)) then
+            call graphABBTree_rec(this%root, file)
+        else 
+            write(file, '(A)') '"empty" [label="Empty layers", shape=box];'
+        end if
         write(file, '(A)') '}'
         close(file)
-        call execute_command_line("dot -Tsvg images/"//trim(adjustl(filename))//".dot > images/"//trim(adjustl(filename))//".svg")
+        call execute_command_line("dot -Tpng images/"//trim(adjustl(filename))//".dot -o images/"//trim(adjustl(filename))//".png")
+        !windows
+        call system("start images\"//trim(adjustl(filename))//".png")
+        ! linux 
+        ! call system("xdg-open images\"//trim(adjustl(filename))//".png")
     end subroutine graphABBTree
 
     recursive subroutine graphABBTree_rec( tmp, unit)
@@ -200,39 +230,6 @@ module module_abbtree_layers
         call graphABBTree_rec(tmp%right, unit)
     end subroutine graphABBTree_rec
     
-    !no usar por separado
-    recursive subroutine preorderRec(root)
-        type(layer), pointer, intent(in) :: root
-
-        if(associated(root)) then
-            print *, root%id
-            call preorderRec(root%left)
-            call preorderRec(root%right)
-        end if
-    end subroutine preorderRec
-
-    !no usar por separado
-    recursive subroutine inordenRec(root)
-        type(layer), pointer, intent(in) :: root
-
-        if(associated(root)) then
-            call inordenRec(root%left)
-            print *, root%id
-            call inordenRec(root%right)
-        end if
-    end subroutine inordenRec
-
-    !no usar por separado
-    recursive subroutine posordenRec(root)
-        type(layer), pointer, intent(in) :: root
-
-        if(associated(root)) then
-            call posordenRec(root%left)
-            call posordenRec(root%right)
-            print *, root%id
-        end if
-    end subroutine posordenRec
-
     recursive subroutine getMajorOfMinorsLayers(root, major)
         type(layer), pointer :: root, major
         if (associated(root%right)) then
@@ -288,14 +285,14 @@ module module_jsonReader_layers
         logical :: found
         integer :: size
         contains
-        procedure :: readJson
-        procedure :: getText
-        procedure :: getInt
+        procedure :: readJson_Layers
+        procedure :: getText_abbjson
+        procedure :: getInt_abbjson
     end type jsonReader_layers
 
     contains
     
-    subroutine readJson(this,filename,tree)
+    subroutine readJson_Layers(this,filename,tree)
         class(jsonReader_layers), intent(inout) :: this
         character(len=*), intent(in) :: filename
         type(abbtree_layers), intent(inout) :: tree
@@ -322,7 +319,7 @@ module module_jsonReader_layers
         do i = 1, this%size         ! Se inicia un bucle sobre el número de elementos en el JSON
             call this%jsonc%get_child(this%listPointer, i,actualchild, found = found)
             if (found) then
-                id = this%getInt(poss=i,text="id_capa",actualchild=actualchild)
+                id = this%getInt_abbjson(poss=i,text="id_capa",actualchild=actualchild)
                 if (.not.found) then
                     print *, "No se obtuvo el id_capa, poss: ", i
                     return
@@ -335,9 +332,9 @@ module module_jsonReader_layers
                 end if
                 do j= 1, no_childs
                     call this%jsonc%get_child(actualsubchild,j,pixelatribute)
-                    fila = this%getInt(poss=j,text="fila",actualchild=pixelatribute)
-                    columna = this%getInt(poss=j,text="columna",actualchild=pixelatribute)
-                    color = this%getText(poss=j,text="color",actualchild=pixelatribute)
+                    fila = this%getInt_abbjson(poss=j,text="fila",actualchild=pixelatribute)
+                    columna = this%getInt_abbjson(poss=j,text="columna",actualchild=pixelatribute)
+                    color = this%getText_abbjson(poss=j,text="color",actualchild=pixelatribute)
                     call list%insertPixel(row=fila,col=columna,color=color)
                 end do
                 print *, "voy aca"
@@ -348,7 +345,7 @@ module module_jsonReader_layers
     end subroutine
 
     
-    function getInt(this,poss,text,actualchild) result(valueret)
+    function getInt_abbjson(this,poss,text,actualchild) result(valueret)
         class(jsonReader_layers), intent(inout) :: this
         integer, intent(in) :: poss
         type(json_value),intent(in),pointer :: actualchild
@@ -363,9 +360,9 @@ module module_jsonReader_layers
             print *, "No se obtuvo el numero, poss: ", poss
             valueret = 00000
         end if
-    end function getInt
+    end function getInt_abbjson
     
-    function getText(this,poss,text,actualchild) result(valueret)
+    function getText_abbjson(this,poss,text,actualchild) result(valueret)
         class(jsonReader_layers), intent(inout) :: this
         integer, intent(in) :: poss
         type(json_value), intent(in),pointer :: actualchild
@@ -381,6 +378,6 @@ module module_jsonReader_layers
         end if
         call this%jsonc%get(this%attributePointer, valueret)  ! Se obtiene el valor y se asigna a la variable 'valueret'
         
-    end function getText
+    end function getText_abbjson
     
 end module module_jsonReader_layers

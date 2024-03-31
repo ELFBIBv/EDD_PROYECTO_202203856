@@ -58,23 +58,9 @@
 ! end program main
 
 program main
-  use module_layer
-  use module_abbtree_layers
-  use module_jsonReader_layers
-  use module_avlTree_images
-  use module_jsonReader_images
-
-  implicit none
-  type(abbtree_layers) :: abbtree
-  type(jsonReader_layers) :: reader
-  type(avlTree_images) :: avltree
-  type(jsonReader_images) :: reader2
-  
-  call reader%readJson("ImagenMario.json", abbtree)
-  call abbtree%graphABBTree("prueba")
-  call avltree%insertImage(id=5,abb=abbtree)
-  call avltree%dotgen("prueba")
-  print *, "Imagenes en el arbol AVL"
-  call reader2%readJson_images(filename="img.json",abbPrincipalTree=abbtree,avlPrincipalTree=avltree)
-
+  character(:), allocatable :: recorrido
+  recorrido = "preorden"
+  recorrido = trim(recorrido) // "inorden"
+  recorrido = trim(recorrido) // "postorden"
+  print *, recorrido
 end program main
