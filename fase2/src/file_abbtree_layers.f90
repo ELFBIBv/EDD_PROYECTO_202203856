@@ -84,6 +84,7 @@ module module_abbtree_layers
         capa = layer(id=id, pixels=pixels)
         if (.not. associated(this%root)) then
             this%root => capa
+            this%num_layers = this%num_layers + 1
         else
             call this%insertRec(this%root, capa,profundidad)
             if (profundidad > this%profundidad) then

@@ -388,33 +388,25 @@ module module_Matrix
         path = "images/"//trim(adjustl(filename))//".dot"
         ! Open the DOT file for writing
         open(unit, file=path, status='replace')
-        print *, "checpoint 2"
         ! Write the DOT code to the file
         write(unit, '(A)') "digraph{"
         write(unit, '(A)') "  node [ shape=plaintext fontname=Helvetica ]"
         write(unit, '(A)') ""
-        print *, "checpoint 3"
         write(unit, '(A)') '  a [ label="' // trim(adjustl(text)) // '"]'
         write(unit, '(A)') "  b [ label = <"
         write(unit, '(A)') "    <table border=""0"" cellborder=""0"" cellspacing=""0"" bgcolor=""white"">"
-        print *, "checpoint 4"
         do i = 0, this%height
-            print *, "checpoint 5"
             write(unit, '(A)') "      <tr>"
             do j = 0, this%width
-                print *, "checpoint 6"
                 val => this%getValue(i, j)
-                print *, "checpoint 7"
                 if (.not. associated(val)) then
                     write(unit, '(A)') "        <td></td>"
                 else
                     write(unit, '(A)') "        <td bgcolor=""" // trim(val%color) // """></td>"
                 end if
             end do
-            print *, "checpoint 8"
             write(unit, '(A)') "      </tr>"
         end do
-        print *, "checpoint 9"
         write(unit, '(A)') "    </table>"
         write(unit, '(A)') "  > ]"
         write(unit, '(A)') ""

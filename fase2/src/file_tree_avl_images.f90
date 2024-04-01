@@ -13,6 +13,7 @@ module module_avlTree_images
 
     type :: avlTree_images
         type(image), pointer :: root => null()
+        integer :: num_images = 0
         contains
         procedure :: insertImage
         procedure :: insertImage_rec !no usar por separado
@@ -47,8 +48,10 @@ module module_avlTree_images
             return
         end if
         if(associated(this%root)) then
+            this%num_images = this%num_images + 1
             call this%insertImage_rec(tmp=this%root,id=id,abb=abb)
         else
+            this%num_images = this%num_images + 1
             allocate(tmp)
             tmp%height = 0
             tmp%abb = abb
@@ -70,6 +73,7 @@ module module_avlTree_images
             tmp%id = id
         else if (id == tmp%id) then
             tmp%abb = abb
+            this%num_images = this%num_images - 1
         else if (id < tmp%id) then
             call this%insertImage_rec(tmp=tmp%left,id=id,abb=abb)
             if ((this%getheight(tmp%left) - this%getheight(tmp%right))==2) then
@@ -400,34 +404,25 @@ module module_avlTree_images
         actualLayer => img_temp%abb%root
         id = actualLayer%id
         call queue%enqueue(id)
-        print *, "checkpoint 1"
         do while (.not. queue%isEmpty())
             call queue%printQueue()
             id = queue%dequeue()
-            print *, "checkpoint 2"
             actualLayer => img_temp%abb%searchLayer(id)
             ! este es el visit()
             actualPixel => actualLayer%pixels%head
-            print *, "checkpoint 3"
             do while (associated(actualPixel))
-                print *, "checkpoint 3.1"
                 i=actualPixel%row
-                print *, "checkpoint 3.2"
                 j=actualPixel%col
                 color = trim(adjustl(actualPixel%color))
                 print *, "fila: ", i, " columna: ", j, " color: ", color
-                print *, "checkpoint 3.3"
                 call actualMatrix%insert(i=i,j=j,color=color)
-                print *, "checkpoint 3.4"
                 actualPixel => actualPixel%next
             end do
             !
-            print *, "checkpoint 4"
             if (associated(actualLayer%left)) then
                 id = actualLayer%left%id
                 call queue%enqueue(id)
             end if
-            print *, "checkpoint 5"
             if (associated(actualLayer%right)) then
                 id = actualLayer%right%id
                 call queue%enqueue(id)

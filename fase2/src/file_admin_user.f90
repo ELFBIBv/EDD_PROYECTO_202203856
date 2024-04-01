@@ -127,6 +127,7 @@ module module_admin_user
     procedure :: eliminar_usuario
     procedure :: modificar_usuario
     procedure :: carga_masiva_usuarios
+    procedure :: reportes_de_admin_user
     end type
 
     contains
@@ -178,14 +179,22 @@ module module_admin_user
     !eliminar un usuario en el arbol B de usuarios
     subroutine eliminar_usuario(this)
         class(admin_user), intent(inout) :: this
+        type(ordinal_user), pointer :: user
         integer(kind=8) :: DPI
         print *, "---------------------------------"
         print *, "Ingrese el DPI del usuario a eliminar (numeros)"
         read *, DPI
-        call this%treeUsers%remove(DPI)
-        print *, "---------------------------------"
-        print *, "Usuario eliminado"
-        print *, "---------------------------------"
+        user => this%treeUsers%getUserAdmin(DPI=DPI, myNode=this%treeUsers%root)
+        if (associated(user)) then
+            call this%treeUsers%remove(DPI)
+            print *, "---------------------------------"
+            print *, "Usuario eliminado"
+            print *, "---------------------------------"
+        else
+            print *, "---------------------------------"
+            print *, "Usuario no encontrado"
+            print *, "---------------------------------"
+        end if
     end subroutine
 
     !modificar un usuario en el arbol B de usuarios
@@ -266,4 +275,59 @@ module module_admin_user
         print *, "---------------------------------"
         
     end subroutine
+
+    subroutine reportes_de_admin_user(this)
+        class(admin_user), intent(inout) :: this
+        type(ordinal_user), pointer :: user
+        integer :: option,counter
+        integer(kind=8) :: DPI
+        logical :: finaly
+        finaly = .false.
+        do while (.not. finaly)
+            print *, "---------------------------------"
+            print *, "reportes de admin_user"
+            print *, "---------------------------------"
+            print *, "1. Informacion de usuario a elegir"
+            print *, "2. Listar clientes por recorrido de nivel"
+            print *, "3. salir"
+            read *, option
+            select case(option)
+                case(1)
+                    print *, "---------------------------------"
+                    print *, "Ingrese el DPI del usuario a buscar"
+                    read *, DPI
+                    user => this%treeUsers%getUserAdmin(DPI=DPI, myNode=this%treeUsers%root)
+                    if (associated(user)) then
+                        print *, "---------------------------------"
+                        print *, "Nombre: ", user%name
+                        print *, "DPI: ", user%DPI
+                        print *, "Password: ", user%password
+                        print *, "---------------------------------"
+                        counter = user%albums%cuantitiAlbums()
+                        print *, "cantidad de albumes: ", counter
+                        counter = user%albums%cuantitiImagesInAlbums()
+                        print *, "cantidad de imagenes en albumes: ", counter
+                        print *, "---------------------------------"
+                        print *, "cantidad de imagenes en total: ", user%ImagesTree%num_images
+                        print *, "cantidad de capas en total: ", user%LayersTree%num_layers
+                    else
+                        print *, "---------------------------------"
+                        print *, "Usuario no encontrado"
+                        print *, "---------------------------------"
+                    end if
+                case(2)
+                    print *, "---------------------------------"
+                    print *, "Listando clientes por recorrido de nivel"
+                    print *, "---------------------------------"
+                    call this%treeUsers%breadthFirstMatrix_adminReport()
+                case(3)
+                    finaly = .true.
+                case default
+                    print *, "---------------------------------"
+                    print *, "Opcion no valida"
+                    print *, "---------------------------------"
+            end select
+        end do
+    end subroutine reportes_de_admin_user
+
 end module

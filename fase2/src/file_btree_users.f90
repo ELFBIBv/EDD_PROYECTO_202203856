@@ -114,6 +114,8 @@ module linkedListAlbum
         procedure :: addImageInAlbum
         procedure :: deleteImageInAlbum
         procedure :: deleteImageInAllAlbums
+        procedure :: cuantitiImagesInAlbums
+        procedure :: cuantitiAlbums
     end type
 
     contains
@@ -246,6 +248,35 @@ module linkedListAlbum
             currentAlbum => currentAlbum%next
         end do
     end subroutine deleteImageInAllAlbums
+
+    function cuantitiImagesInAlbums(this) result(counter)
+        class(albumList), intent(in) :: this
+        type(album), pointer :: currentAlbum
+        type(image), pointer :: currentImage
+        integer :: counter
+        counter = 0
+        currentAlbum => this%head
+        do while (associated(currentAlbum))
+            currentImage => currentAlbum%images%head
+            do while (associated(currentImage))
+                counter = counter + 1
+                currentImage => currentImage%next
+            end do
+            currentAlbum => currentAlbum%next
+        end do
+    end function cuantitiImagesInAlbums
+
+    function cuantitiAlbums(this) result(counter)
+        class(albumList), intent(in) :: this
+        type(album), pointer :: currentAlbum
+        integer :: counter
+        counter = 0
+        currentAlbum => this%head
+        do while (associated(currentAlbum))
+            counter = counter + 1
+            currentAlbum => currentAlbum%next
+        end do
+    end function cuantitiAlbums
 
 end module linkedListAlbum
 
@@ -409,6 +440,7 @@ module module_ordinal_user
         class(ordinal_user), intent(inout) :: this
         type(imageList), pointer :: currentImage
         type(album), pointer :: currentAlbum
+        class(image), pointer :: img
         integer :: id
         integer :: option
         logical :: found
@@ -450,9 +482,18 @@ module module_ordinal_user
                     print *, "---------------------------------"
                     print *, "ingrese el id de la imagen a eliminar"
                     read *, id
-                    call this%ImagesTree%deleteImg(id)
-                    print *, "ola"
-                    call this%albums%deleteImageInAllAlbums(id)
+                    img => this%ImagesTree%searchImage(id)
+                    if (associated(img)) then
+                        call this%ImagesTree%deleteImg(id)
+                        call this%albums%deleteImageInAllAlbums(id)
+                        print *, "---------------------------------"
+                        print *, "Imagen eliminada"
+                        print *, "---------------------------------"
+                    else
+                        print *, "---------------------------------"
+                        print *, "Imagen no encontrada"
+                        print *, "---------------------------------"
+                    end if
                 case(3)
                     found = .true.
                 case default
@@ -581,30 +622,38 @@ module module_ordinal_user
         class(ordinal_user), intent(in) :: this
         type(matrix) :: actmatrix
         type(queue) :: cola
+        class(image), pointer :: img
         integer :: response
         logical :: found
         found = .false.
         actmatrix%root => null()
-        do while (.not. found) !4.3.5
-            ! print *, "mire la grafica de las capas y las imagenes en la carpeta images"
-            print *, "---------------------------------"
-            print *, "que imagen desea graficar? (ingresar id de la imagen)"
-            call cola%cleanQueue()
-            call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
-            call cola%printQueue()
-            print *, "---------------------------------"
-            print *, "arriba estan las imagenes disponibles (ingrese '-1' para salir)"
-            print *, "---------------------------------"
-            read *, response
-            if (response /= -1) then
+        print *, "---------------------------------"
+        print *, "que imagen desea graficar? (ingresar id de la imagen)"
+        call cola%cleanQueue()
+        call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
+        call cola%printQueue()
+        print *, "---------------------------------"
+        print *, "arriba estan las imagenes disponibles (ingrese '-1' para salir)"
+        print *, "---------------------------------"
+        read *, response
+        if (response /= -1) then
+            img => this%ImagesTree%searchImage(response)
+            if (associated(img)) then
                 call this%ImagesTree%breadthFirstMatrix(actualMatrix=actmatrix,idImage=response)
                 call actmatrix%graphMatrix("matrix_image")
                 call actmatrix%graphTable("image"," ")
                 call actmatrix%cleanMatrix()
+                print *, "---------------------------------"
+                print *, "Imagen graficada"
+                print *, "---------------------------------"
             else
-                return
+                print *, "---------------------------------"
+                print *, "Imagen no encontrada"
+                print *, "---------------------------------"
             end if
-        end do
+        else
+            return
+        end if
     end subroutine por_arbol_de_imagenes
 
     subroutine por_capa(this,acumulativo)
@@ -674,9 +723,7 @@ module module_ordinal_user
         call this%LayersTree%leaf_layers(this%layersTree%root)
         print *, ""
         print *, "---------------------------------"
-        print *, "profundidad de arbol de capas"
-        print *, "profundiadad", this%LayersTree%profundidad
-        print *, "---------------------------------"
+        print *, "profundidad de arbol de capas: ", this%LayersTree%profundidad
         print *, "--------------capas--------------"
         call this%LayersTree%preorderABB(this%LayersTree%root,cola)
         write(*,"(A)", advance='no') "preorden"
@@ -691,13 +738,23 @@ module module_ordinal_user
         call cola%printQueue()
         print *, "---------------------------------"
     end subroutine reportes_de_usuario
+
 end module
-
-
-
 module module_btree
     use module_ordinal_user
     implicit none
+    type queue_node
+        type(BTree), pointer :: tree => null()
+        type(queue_node), pointer :: next => null()
+    end type queue_node
+
+    type queue_BTree
+        type(queue_node), pointer :: head => null()
+        type(queue_node), pointer :: tail => null()
+    contains
+        procedure :: queueaddBTree
+        procedure :: dequeueBTree
+    end type
 
     type nodeptr
         type (BTree), pointer :: ptr => null()
@@ -726,6 +783,8 @@ module module_btree
         procedure :: createNode
         procedure :: deletenode
         procedure :: getUser
+        procedure :: getUserAdmin
+        procedure :: breadthFirstMatrix_adminReport
     end type BTree
 
     contains
@@ -1046,4 +1105,102 @@ module module_btree
         end do
     end function getUser
 
+    function getUserAdmin(this,DPI,myNode) result(user)
+        class(BTree), intent(in) :: this
+        integer(kind=8), intent(in) :: DPI
+        type(ordinal_user),pointer :: user,actualuser
+        type(BTree), pointer,intent(in) :: myNode
+        type(BTree), pointer :: myNode2
+        logical :: found
+        integer :: i
+        myNode2 => myNode
+        found = .false.
+        user => null()
+        do while (.not. found)
+            if (associated(myNode2)) then
+                do i = 0, myNode2%num-1
+                    actualuser => myNode2%val(i+1)
+                    if (DPI<actualuser%DPI) then
+                        if (associated(myNode2%link(i)%ptr)) then
+                            myNode2 => myNode2%link(i)%ptr
+                            exit
+                        else
+                            print *, "No se encontro el usuario"
+                            return
+                        end if
+                        !si es igual al primer nodo entonces va a devolver ese nodo
+                    else if (actualuser%DPI==DPI) then
+                        user => myNode2%val(i+1)
+                        return
+                    end if
+                end do
+                if (DPI>myNode2%val(myNode2%num)%DPI) then
+                    myNode2 => myNode2%link(myNode2%num)%ptr
+                end if
+            else
+                print *, "No se encontro el usuario"
+                return
+            end if
+        end do
+    end function getUserAdmin
+
+    subroutine breadthFirstMatrix_adminReport(this)
+        class(BTree), intent(in) :: this
+        type(ordinal_user), pointer :: actualUser
+        type(BTree), pointer :: myNode
+        type(queue_BTree) :: queue
+        integer :: posicion,posicion2,i
+        integer(kind=8) :: DPI
+        if (.not. associated(this%root)) then
+            print *, "Arbol de usuarios esta vacio"
+            return
+        end if
+        call queue%queueaddBTree(this%root)
+        do while (associated(queue%head))
+            myNode => queue%dequeueBTree()
+            ! este es el visit()
+            do i = 0, myNode%num-1
+                actualUser => myNode%val(i+1)
+                print *, "Usuario: ", actualUser%name
+                print *, "DPI: ", actualUser%DPI
+                print *, "cantidad imagenes: ", actualUser%ImagesTree%num_images
+                print *, "---------------------------------"
+            end do
+            !
+            do i = 0, myNode%num
+                if (associated(myNode%link(i)%ptr)) then
+                    call queue%queueaddBTree(myNode%link(i)%ptr)
+                end if
+            end do
+        end do
+    end subroutine breadthFirstMatrix_adminReport
+
+    subroutine queueaddBTree(this,myNode)
+        class(queue_BTree), intent(inout) :: this
+        type(BTree), pointer, intent(in) :: myNode
+        type(queue_node), pointer :: newNode
+        allocate(newNode)
+        newNode%tree => myNode
+        if (.not. associated(this%head)) then
+            this%head => newNode
+            this%tail => newNode
+        else
+            this%tail%next => newNode
+            this%tail => newNode
+        end if
+    end subroutine queueaddBTree
+
+    function dequeueBTree(this) result(myNode)
+        class(queue_BTree), intent(inout) :: this
+        type(BTree), pointer :: myNode
+        type(queue_node), pointer :: temp
+        if (associated(this%head)) then
+            myNode => this%head%tree
+            temp => this%head
+            this%head => this%head%next
+            deallocate(temp)
+        else
+            myNode => null()
+        end if
+    end function dequeueBTree
 end module module_btree

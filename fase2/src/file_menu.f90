@@ -47,7 +47,8 @@ module module_menu
                                 print *, "3. eliminar usuario"
                                 print *, "4. modificar usuario"
                                 print *, "5. carga masiva de usuarios"
-                                print *, "6. salir"
+                                print *, "6. reportes"
+                                print *, "7. salir"
                                 read *, option
                                 select case(option)
                                     case(1)
@@ -61,6 +62,8 @@ module module_menu
                                     case(5)
                                         call this%admin%carga_masiva_usuarios()
                                     case(6)
+                                        call this%admin%reportes_de_admin_user()
+                                    case(7)
                                         salir = .false.
                                     case default
                                         print *, "opcion no valida"
