@@ -91,8 +91,7 @@ module module_menu
                                     print *, "1. visualizar reportes de las estructuras"
                                     print *, "2. navegacion y gestion de imagenes"
                                     print *, "3. opciones de carga masiva"
-                                    print *, "4. reportes"
-                                    print *, "5. salir"
+                                    print *, "4. salir"
                                     read *, option
                                     select case(option)
                                         case(1)
@@ -116,8 +115,6 @@ module module_menu
                                                 print *, "opcion no valida"
                                             end select
                                         case(4)
-                                            call user%reportes_de_usuario()
-                                        case(5)
                                             salir = .false.
                                         case default
                                             print *, "opcion no valida"

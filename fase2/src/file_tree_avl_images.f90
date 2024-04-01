@@ -33,7 +33,7 @@ module module_avlTree_images
         procedure :: deleteImg_rec !no usar por separado
         procedure :: breadthFirstMatrix
         procedure :: top_five_images_with_more_layers
-
+        procedure :: graphImagesWithLayers
     end type
 
     contains
@@ -236,6 +236,77 @@ module module_avlTree_images
         call graphImages_rec(tmp%left, unit)
         call graphImages_rec(tmp%right, unit)
     end subroutine graphImages_rec
+
+    subroutine graphImagesWithLayers(this, filename,idImage)
+        class(avlTree_images), intent(in) :: this
+        integer, intent(in) :: idImage
+        character(len=*), intent(in) :: filename
+        type(image),pointer :: actualImage
+        character(:),allocatable :: path
+        character(200) :: text
+        integer :: file
+        text = ""
+        path = "images/"//trim(adjustl(filename))//".dot"
+        open(file, file=path, status="replace")
+        write(file, '(A)') 'digraph{'
+        if (associated(this%root)) then
+            call graphImagesWithLayers_rec(this%root, file,idImage,text)
+            write(file, '(A)') text
+        else 
+            write(file, '(A)') '"empty" [label="Empty Images", shape=box];'
+        end if
+        write(file, '(A)') '}'
+        close(file)
+        call execute_command_line("dot -Tpng images/"//trim(adjustl(filename))//".dot -o images/"//trim(adjustl(filename))//".png")
+        !windows
+        call system("start images\"//trim(adjustl(filename))//".png")
+        ! linux 
+        ! call system("xdg-open images\"//trim(adjustl(filename))//".png")
+    end subroutine graphImagesWithLayers
+    
+    recursive subroutine graphImagesWithLayers_rec(tmp, unit,idImage,text)
+        class(image), intent(in), pointer :: tmp
+        integer, intent(in) :: unit
+        integer, intent(in) :: idImage
+        type(layer), pointer :: actualLayer
+        character(200), intent(inout) :: text
+        character(10) :: casteo,casteo2
+        integer :: id
+        if (.not. associated(tmp)) then
+            return
+        end if
+        write (casteo,"(I10)") tmp%id
+        write (unit, '(A)') ' imagen'//trim(adjustl(casteo))//' [label="'//trim(adjustl(casteo))// '",shape=box];'
+        if (associated(tmp%left)) then
+            write (casteo,"(I10)") tmp%id
+            write (casteo2,"(I10)") tmp%left%id
+            write (unit, '(A)') ' imagen'//trim(adjustl(casteo2))// ' [label="'//trim(adjustl(casteo2))// '",shape=box];'
+            write (unit, '(A)') ' imagen'//trim(adjustl(casteo))// ' -> imagen'//trim(adjustl(casteo2))// ';'
+            casteo = ""
+            casteo2 =  ""
+        end if
+        if (associated(tmp%right)) then
+            write (casteo,"(I10)") tmp%id
+            write (casteo2,"(I10)") tmp%right%id
+            write (unit, '(A)') ' imagen'//trim(adjustl(casteo2))// ' [label="'//trim(adjustl(casteo2))// '",shape=box];'
+            write (unit, '(A)') ' imagen'//trim(adjustl(casteo))//' -> imagen'//trim(adjustl(casteo2))// ';'
+            casteo = ""
+            casteo2 =  ""
+        end if
+        if (tmp%id == idImage) then
+            actualLayer => tmp%abb%root
+            write (casteo,"(I10)") tmp%id
+            id = actualLayer%id
+            write (casteo2,"(I10)") id
+            text = ' imagen'//trim(adjustl(casteo))//' ->'//trim(adjustl(casteo2))// ';'
+            casteo = ""
+            casteo2 =  ""
+            call graphABBTree_rec(actualLayer,unit)
+        end if
+        call graphImagesWithLayers_rec(tmp%left, unit,idImage,text)
+        call graphImagesWithLayers_rec(tmp%right, unit,idImage,text)
+    end subroutine graphImagesWithLayers_rec
+
 
     function searchImage(this, id) result(res)
         class(avlTree_images), intent(in) :: this

@@ -394,6 +394,7 @@ module module_ordinal_user
     procedure :: por_recorrido_limitado! no usar este
     procedure :: por_arbol_de_imagenes! no usar este
     procedure :: por_capa ! no usar este
+    procedure :: ver_imagen_y_arbol_de_capas
     end type ordinal_user
 
     contains
@@ -462,7 +463,8 @@ module module_ordinal_user
                     print *, "1. por recorrido limitado"
                     print *, "2. por arbol de imagenes"
                     print *, "3. por capa"
-                    print *, "4. salir"
+                    print *, "4. ver imagen y arbol de capas"
+                    print *, "5. salir"
                     read *, option
                     select case(option)
                         case(1)
@@ -472,7 +474,9 @@ module module_ordinal_user
                         case(3)
                             call this%por_capa(acumulativo=1)!4.1.3
                         case(4)
-                            return
+                            call this%ver_imagen_y_arbol_de_capas()
+                        case(5)
+
                         case default
                             print *, "Opcion no valida"
                     end select
@@ -701,6 +705,41 @@ module module_ordinal_user
             end if
         end do
     end subroutine por_capa
+
+    subroutine ver_imagen_y_arbol_de_capas(this)
+        class(ordinal_user), intent(in) :: this
+        type(matrix) :: actmatrix
+        type(queue) :: cola
+        class(image), pointer :: img
+        integer :: response
+        logical :: found
+        found = .false.
+        actmatrix%root => null()
+        print *, "---------------------------------"
+        print *, "que imagen desea graficar? (ingresar id de la imagen)"
+        call cola%cleanQueue()
+        call this%ImagesTree%inorderAVL(this%ImagesTree%root,cola)
+        call cola%printQueue()
+        print *, "---------------------------------"
+        print *, "arriba estan las imagenes disponibles (ingrese '-1' para salir)"
+        print *, "---------------------------------"
+        read *, response
+        if (response /= -1) then
+            img => this%ImagesTree%searchImage(response)
+            if (associated(img)) then
+                call this%ImagesTree%graphImagesWithLayers(filename="arbolDeImagenesConArbolDeCapas",idImage=response)
+                print *, "---------------------------------"
+                print *, "Imagen graficada"
+                print *, "---------------------------------"
+            else
+                print *, "---------------------------------"
+                print *, "Imagen no encontrada"
+                print *, "---------------------------------"
+            end if
+        else
+            return
+        end if
+        end subroutine ver_imagen_y_arbol_de_capas
 
     subroutine reportes_de_usuario(this)
         class(ordinal_user), intent(in) :: this
@@ -1077,7 +1116,6 @@ module module_btree
         found = .false.
         do while (.not. found)
             if (associated(myNode2)) then
-                print *, "DPI", myNode2%val(1)%DPI, "num", myNode2%num, "password", trim(adjustl(myNode2%val(1)%password))
                 do i = 0, myNode2%num-1
                     actualuser => myNode2%val(i+1)
                     if (DPI<actualuser%DPI) then
