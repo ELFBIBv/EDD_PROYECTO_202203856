@@ -512,7 +512,7 @@ module module_ordinal_user
         print *, "---------------------------------"
         print *, "Carga masiva de capas"
         print *, "---------------------------------"
-        call reader%readJson_Layers(filename="imagenmario.json",tree=this%LayersTree)
+        call reader%readJson_Layers(filename="capas.json",tree=this%LayersTree)
         print *, "---------------------------------"
         print *, "Carga masiva de capas finalizada"
         print *, "---------------------------------"
@@ -524,7 +524,7 @@ module module_ordinal_user
         print *, "---------------------------------"
         print *, "Carga masiva de imagenes"
         print *, "---------------------------------"
-        call reader%readJson_Images(filename="img.json",abbPrincipalTree=this%LayersTree,avlPrincipalTree=this%ImagesTree)
+        call reader%readJson_Images(filename="imagenes.json",abbPrincipalTree=this%LayersTree,avlPrincipalTree=this%ImagesTree)
         print *, "---------------------------------"
         print *, "Carga masiva de imagenes finalizada"
         print *, "---------------------------------"
@@ -739,7 +739,7 @@ module module_ordinal_user
         else
             return
         end if
-        end subroutine ver_imagen_y_arbol_de_capas
+    end subroutine ver_imagen_y_arbol_de_capas
 
     subroutine reportes_de_usuario(this)
         class(ordinal_user), intent(in) :: this
@@ -1069,6 +1069,10 @@ module module_btree
         write(file, *) '}'
         close(file)
         call execute_command_line(trim("dot -Tpng images\treeUsers.dot -o images\treeUsers.png"))
+        !windows
+        call system("start images\treeUsers.png")
+        ! linux 
+        ! call system("xdg-open images\"//trim(adjustl(filename))//".png")
     end subroutine graphBTree
 
     recursive subroutine graphrec(myNode,node1,file)
@@ -1123,21 +1127,23 @@ module module_btree
                             myNode2 => myNode2%link(i)%ptr
                             exit
                         else
-                            print *, "No se encontro el usuario"
                             return
                         end if
                         !si es igual al primer nodo entonces va a devolver ese nodo
-                    else if (actualuser%DPI==DPI .and. trim(adjustl(actualuser%password))==trim(adjustl(password))) then
-                        user => myNode2%val(i+1)
-                        found = .true.
-                        return
+                    else if (actualuser%DPI==DPI) then
+                        if (trim(adjustl(actualuser%password))==trim(adjustl(password))) then
+                            user => myNode2%val(i+1)
+                            found = .true.
+                            return
+                        else 
+                            return
+                        end if
                     end if
                 end do
                 if (DPI>myNode2%val(myNode2%num)%DPI) then
                     myNode2 => myNode2%link(myNode2%num)%ptr
                 end if
             else
-                print *, "No se encontro el usuario"
                 return
             end if
         end do

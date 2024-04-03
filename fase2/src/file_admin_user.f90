@@ -268,7 +268,7 @@ module module_admin_user
         print *, "cargando usuarios"
         print *, "---------------------------------"
 
-        call json%readJson("users.json", this%treeUsers)
+        call json%readJson("usuarios.json", this%treeUsers)
         
         print *, "---------------------------------"
         print *, "usuarios cargados"

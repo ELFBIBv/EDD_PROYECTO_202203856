@@ -68,8 +68,8 @@ module module_menu
                                     case default
                                         print *, "opcion no valida"
                                     end select
-                                end do
-                                salir = .true.
+                            end do
+                            salir = .true.
                         else
                             tree => this%admin%treeUsers%root
                             if (.not. associated(tree)) then
