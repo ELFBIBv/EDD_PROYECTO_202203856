@@ -134,19 +134,13 @@ module module_admin_user
     !crear un arbol B de usuarios
     subroutine arbolB_de_usuarios(this)
         class(admin_user), intent(inout) :: this
-        if (associated(this%treeUsers%returnRoot())) then
-            print *, "---------------------------------"
-            print *, "haciendo arbol de usuarios"
-            print *, "---------------------------------"
-            call this%treeUsers%graphBTree(myNode=this%treeUsers%returnRoot())
-            print *, "---------------------------------"
-            print *, "Arbol de usuarios hecho"
-            print *, "---------------------------------"
-        else
-            print *, "---------------------------------"
-            print *, "No se ha podido hacer el arbol de usuarios"
-            print *, "---------------------------------"
-        end if
+        print *, "---------------------------------"
+        print *, "haciendo arbol de usuarios"
+        print *, "---------------------------------"
+        call this%treeUsers%graphBTree(myNode=this%treeUsers%returnRoot())
+        print *, "---------------------------------"
+        print *, "Arbol de usuarios hecho"
+        print *, "---------------------------------"
     end subroutine
 
     !insertar un usuario en el arbol B de usuarios

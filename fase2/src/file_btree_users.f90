@@ -1004,8 +1004,8 @@ module module_btree
         allocate(root2)
         print *, ""
         call this%deletenode(DPI,this%root,root2)
-        call root2%traversal(myNode=root2%returnRoot())
-        print *, ""
+        ! call root2%traversal(myNode=root2%returnRoot())
+        ! print *, ""
         deallocate(this%root)
         this%root => root2%returnRoot()
     end subroutine remove
@@ -1018,16 +1018,18 @@ module module_btree
         class(BTree), pointer, intent(out) :: tree
         integer :: i 
         if (associated(root1)) then
-            do i = 1, root1%num
-                if (DPI /= root1%val(i)%DPI) then
-                    call tree%insert(root1%val(i))
-                else
-                end if 
-            end do
-            i = 0
-            do i = 0, root1%num
-                call this%deletenode(DPI,root1%link(i)%ptr,tree)
-            end do
+            if (root1%num /= 0) then
+                do i = 1, root1%num
+                    if (DPI /= root1%val(i)%DPI) then
+                        call tree%insert(root1%val(i))
+                    else
+                    end if 
+                end do
+                i = 0
+                do i = 0, root1%num
+                    call this%deletenode(DPI,root1%link(i)%ptr,tree)
+                end do
+            end if
         end if
     end subroutine deletenode
 
@@ -1044,7 +1046,7 @@ module module_btree
         write(file, *) 'digraph G {'
         
         if (.not. associated(myNode)) then
-            write(file, *) '"empty" [label="Empty papers", shape=box];'
+            write(file, *) '"empty" [label="Empty users tree", shape=box];'
         else
             write (node1,'(I13)') myNode%val(1)%DPI
             do i = 1, myNode%num-1
@@ -1118,6 +1120,7 @@ module module_btree
         integer :: i
         myNode2 => myNode
         found = .false.
+        user => null()
         do while (.not. found)
             if (associated(myNode2)) then
                 do i = 0, myNode2%num-1
@@ -1126,8 +1129,6 @@ module module_btree
                         if (associated(myNode2%link(i)%ptr)) then
                             myNode2 => myNode2%link(i)%ptr
                             exit
-                        else
-                            return
                         end if
                         !si es igual al primer nodo entonces va a devolver ese nodo
                     else if (actualuser%DPI==DPI) then
