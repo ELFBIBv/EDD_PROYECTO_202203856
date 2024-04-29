@@ -1,0 +1,76 @@
+[
+    {
+        "dpi": "1234567891012",
+        "nombre": "Juan",
+        "apellido": "Gonzales Carrillo",
+        "genero": "Masculino", 
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    },
+    {
+        "dpi": "9994567891012",
+        "nombre": "Maria",
+        "apellido": "Portillo Velazquez",
+        "genero": "Femenino", 
+        "direccion": "6 calle 8-40 Villa Nueva",
+        "telefono": 12345677
+    },
+    {
+        "dpi": "1234567891013",
+        "nombre": "Pedro",
+        "apellido": "Gonzales Carrillo",
+        "genero": "Masculino", 
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    },
+    {
+        "dpi": "9994567891014",
+        "nombre": "Maria",
+        "apellido": "Portillo Velazquez",
+        "genero": "Femenino", 
+        "direccion": "6 calle 8-40 Villa Nueva",
+        "telefono": 12345677
+    },
+    {
+        "dpi": "1234567891015",
+        "nombre": "Pedro",
+        "apellido": "Gonzales Carrillo",
+        "genero": "Masculino", 
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    },
+    {
+        "dpi": "9994567891016",
+        "nombre": "Maria",
+        "apellido": "Portillo Velazquez",
+        "genero": "Femenino", 
+        "direccion": "6 calle 8-40 Villa Nueva",
+        "telefono": 12345677
+    },
+    {
+        "dpi": "1234567891017",
+        "nombre": "Pedro",
+        "apellido": "Gonzales Carrillo",
+        "genero": "Masculino", 
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    },
+    {
+        "dpi": "9994567891018",
+        "nombre": "Maria",
+        "apellido": "Portillo Velazquez",
+        "genero": "Femenino", 
+        "direccion": "6 calle 8-40 Villa Nueva",
+        "telefono": 12345677
+    },
+    {
+        "dpi": "1234567891019",
+        "nombre": "Pedro",
+        "apellido": "Gonzales Carrillo",
+        "genero": "Masculino", 
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    }
+
+
+]
