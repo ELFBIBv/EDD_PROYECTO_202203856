@@ -31,7 +31,7 @@ module merkle_tree
         procedure :: create_tree
         procedure :: gen_hash
         procedure :: generate
-        procedure :: merkle_dot 
+        procedure :: merkle_dot
         procedure :: merkle_dot_rec
     end type merkle
 
@@ -168,18 +168,19 @@ module merkle_tree
     end subroutine generate
     
     subroutine merkle_dot(this)
-        class(merkle), intent(inout) :: this        
-        open(69, file='images/merkle.dot', status='replace')
-        write(69, '(A)') 'digraph Merkle_tree {'
-        write(69, '(A)') 'node [shape=record, fontname=Arial, fontsize=12];'
-        call this%merkle_dot_rec(this%top_hash, 69)
-        write(69, '(A)') '}'
-        close(69)
-        ! call execute_command_line('dot -Tsvg outputs/merkle.dot -o outputs/merkle.svg')
+        class(merkle), intent(inout) :: this
+        integer :: file
+        open(file, file='images/merkle.dot', status='replace')
+        write(file, '(A)') 'digraph Merkle_tree {'
+        write(file, '(A)') 'node [shape=record, fontname=Arial, fontsize=12];'
+        call this%merkle_dot_rec(this%top_hash, file)
+        write(file, '(A)') '}'
+        close(file)
+        
         call execute_command_line('dot -Tpng images/merkle.dot -o images/merkle.png')
         ! windows
         ! call system("start images\merkle.png")
-        ! linux 
+        !linux
         call system("eog images/merkle.png") !si da error se debe de usar "unset GTK_PATH"
     end subroutine merkle_dot
 
@@ -201,11 +202,11 @@ module merkle_tree
         call this%merkle_dot_rec(tmp%right, unit)
         if ( associated(tmp%dataref) ) then            
             write(unit, '(I0, A)') tmp%dataref%uid, ' [label=<<TABLE><TR>'
-            write(unit, '(A, A, A)') '<TD>id_origin: ', trim(tmp%dataref%id_origin), '</TD>'
-            write(unit, '(A, A, A)') '<TD>address_origin: ', trim(tmp%dataref%address_origin), '</TD></TR>'
-            write(unit, '(A, A, A)') '<TR><TD>id_destination: ', trim(tmp%dataref%id_destination), '</TD>'
-            write(unit, '(A, A, A)') '<TD>address_destination: ', trim(tmp%dataref%address_destination), '</TD></TR>'
-            write(unit, '(A, A, A)') '<TR><TD>cost_between: ', trim(tmp%dataref%cost_between), '</TD></TR>'
+            write(unit, '(A, A, A)') '<TD>Origen: ', trim(tmp%dataref%id_origin), '</TD>'
+            write(unit, '(A, A, A)') '<TD> ', trim(tmp%dataref%address_origin), '</TD></TR>'
+            write(unit, '(A, A, A)') '<TR><TD>Destino: ', trim(tmp%dataref%id_destination), '</TD>'
+            write(unit, '(A, A, A)') '<TD>: ', trim(tmp%dataref%address_destination), '</TD></TR>'
+            write(unit, '(A, A, A)') '<TR><TD>Costo: ', trim(tmp%dataref%cost_between), '</TD></TR>'
             write(unit, '(A)') '</TABLE>>];'
             write(unit, '(I0, A, I0, A)') tmp%uid, ' -> ', tmp%dataref%uid, ';'
         end if

@@ -1,9 +1,9 @@
 name = "fase3"
 version = "0.1.0"
 license = "license"
-author = "Alvaro Morales"
-maintainer = "3021420020101@ingenieria.usac.edu.gt"
-copyright = "Copyright 2024, Alvaro Morales"
+author = "Carbonell-Castillo"
+maintainer = "brucecastillo1204@gmail.com"
+copyright = "Copyright 2024, Carbonell-Castillo"
 [build]
 auto-executables = true
 auto-tests = true
@@ -15,4 +15,5 @@ library = false
 implicit-typing = false
 implicit-external = false
 source-form = "free"
-
+[dependencies]
+json-fortran = {git = "https://github.com/jacobwilliams/json-fortran"}
