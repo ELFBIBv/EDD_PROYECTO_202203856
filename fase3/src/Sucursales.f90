@@ -178,7 +178,8 @@ module module_AvlSucursales
             return
         end if
         call this%inorder(tmp%left)
-        print *, tmp%value%id, "->", tmp%value%departamento
+        ! print *, tmp%value%id, "->", tmp%value%departamento
+        write (*, '(1I3,A)', advance='no') tmp%value%id, "|"
         call this%inorder(tmp%right)
     end subroutine inorder
 
@@ -397,9 +398,7 @@ module module_jsonReaderSucursales
         integer :: unit
         character(len=100) :: filename
         
-        filename = 'images/sucursales.dot'
-        open(unit, file=filename, status='replace')
-
+        
         call this%InicialiceJson()  ! Se inicializa el módulo JSON
         print *, "id | departamento | direccion | password"
         do i = 1, this%size                          ! Se inicia un bucle sobre el número de elementos en el JSON
@@ -412,6 +411,8 @@ module module_jsonReaderSucursales
             call avl1%add(s1)
             print *, id, " | ", departamento, " | ", direccion, " | ", password
         end do
+        filename = 'images/sucursales.dot'
+        open(unit, file=filename, status='replace')
         print *, 'Generating Dot file...'
         call avl1%dotgen(avl1%root, unit)
         close(unit)

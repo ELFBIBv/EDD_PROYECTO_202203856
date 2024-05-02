@@ -1,0 +1,86 @@
+[
+    {
+        "id": 7,
+        "departamento": "Guatemala",
+        "direccion": "Avenida 6 901",
+        "password": "901L9"
+    },
+    {
+        "id": 14,
+        "departamento": "Guatemala",
+        "direccion": "Calle 13 2345",
+        "password": "234S6"
+    },
+    {
+        "id": 1,
+        "departamento": "Guatemala",
+        "direccion": "Avenida Principal 123",
+        "password": "123F3"
+    },
+    {
+        "id": 5,
+        "departamento": "Guatemala",
+        "direccion": "Avenida Oeste 345",
+        "password": "345J7"
+    },
+    {
+        "id": 12,
+        "departamento": "Guatemala",
+        "direccion": "Calle 11 5678",
+        "password": "567Q4"
+    },
+    {
+        "id": 9,
+        "departamento": "Guatemala",
+        "direccion": "Avenida 8 567",
+        "password": "567N1"
+    },
+    {
+        "id": 11,
+        "departamento": "Guatemala",
+        "direccion": "Avenida 10 1234",
+        "password": "123P3"
+    },
+    {
+        "id": 8,
+        "departamento": "Guatemala",
+        "direccion": "Calle 7 234",
+        "password": "234M0"
+    },
+    {
+        "id": 3,
+        "departamento": "Guatemala",
+        "direccion": "Calle Sur 789",
+        "password": "789H5"
+    },
+    {
+        "id": 6,
+        "departamento": "Guatemala",
+        "direccion": "Calle 5 678",
+        "password": "678K8"
+    },
+    {
+        "id": 10,
+        "departamento": "Guatemala",
+        "direccion": "Calle 9 890",
+        "password": "890O2"
+    },
+    {
+        "id": 2,
+        "departamento": "Guatemala",
+        "direccion": "Avenida Norte 456",
+        "password": "456G4"
+    },
+    {
+        "id": 13,
+        "departamento": "Guatemala",
+        "direccion": "Avenida 12 9012",
+        "password": "901R5"
+    },
+    {
+        "id": 4,
+        "departamento": "Guatemala",
+        "direccion": "Avenida 1 1234",
+        "password": "4123"
+    }
+]

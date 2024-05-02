@@ -1,0 +1,124 @@
+{
+    "grafo": [
+        {
+            "s1": 1,
+            "s2": 5,
+            "distancia": 7,
+            "imp_mantenimiento": 2
+        },
+        {
+            "s1": 1,
+            "s2": 10,
+            "distancia": 4,
+            "imp_mantenimiento": 6
+        },
+        {
+            "s1": 2,
+            "s2": 3,
+            "distancia": 5,
+            "imp_mantenimiento": 3
+        },
+        {
+            "s1": 2,
+            "s2": 14,
+            "distancia": 6,
+            "imp_mantenimiento": 7
+        },
+        {
+            "s1": 3,
+            "s2": 1,
+            "distancia": 3,
+            "imp_mantenimiento": 4
+        },
+        {
+            "s1": 3,
+            "s2": 9,
+            "distancia": 8,
+            "imp_mantenimiento": 5
+        },
+        {
+            "s1": 4,
+            "s2": 8,
+            "distancia": 6,
+            "imp_mantenimiento": 3
+        },
+        {
+            "s1": 5,
+            "s2": 7,
+            "distancia": 5,
+            "imp_mantenimiento": 6
+        },
+        {
+            "s1": 6,
+            "s2": 2,
+            "distancia": 4,
+            "imp_mantenimiento": 7
+        },
+        {
+            "s1": 6,
+            "s2": 12,
+            "distancia": 3,
+            "imp_mantenimiento": 4
+        },
+        {
+            "s1": 7,
+            "s2": 5,
+            "distancia": 9,
+            "imp_mantenimiento": 5
+        },
+        {
+            "s1": 8,
+            "s2": 11,
+            "distancia": 7,
+            "imp_mantenimiento": 8
+        },
+        {
+            "s1": 9,
+            "s2": 4,
+            "distancia": 6,
+            "imp_mantenimiento": 3
+        },
+        {
+            "s1": 10,
+            "s2": 6,
+            "distancia": 5,
+            "imp_mantenimiento": 6
+        },
+        {
+            "s1": 11,
+            "s2": 13,
+            "distancia": 4,
+            "imp_mantenimiento": 5
+        },
+        {
+            "s1": 12,
+            "s2": 9,
+            "distancia": 8,
+            "imp_mantenimiento": 2
+        },
+        {
+            "s1": 13,
+            "s2": 2,
+            "distancia": 3,
+            "imp_mantenimiento": 7
+        },
+        {
+            "s1": 14,
+            "s2": 11,
+            "distancia": 6,
+            "imp_mantenimiento": 4
+        },
+        {
+            "s1": 14,
+            "s2": 9,
+            "distancia": 4,
+            "imp_mantenimiento": 6
+        },
+        {
+            "s1": 7,
+            "s2": 11,
+            "distancia": 4,
+            "imp_mantenimiento": 2
+        }
+    ]
+}

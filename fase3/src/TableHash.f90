@@ -160,35 +160,28 @@ module TableHash
         integer :: unit
     
         unit = 10  
-        open(unit, file="images/"//trim(filename)//".dot", status='replace')
+        open(unit, file="images/hash.dot", status='replace')
         print *, "GRAFICANDO HASH"
         write(unit, '(A)') 'digraph {'
         write(unit, '(A)') 'rankdir=BR'
         write(unit, '(A)') 'node [shape=record, style=filled, fillcolor="#66CCCC", fontname="Arial"];'
-        write(unit, '(A,I5)',advance="no") 'node[label="',self%hashT(1)%dpi
-        ! Contenido de la tabla
-        do i = 2, size(self%hashT) - 1
-            if (self%hashT(i)%dpi /= -1) then
-                write(unit, '(A,I5)',advance="no") '|',self%hashT(i)%dpi
-            else
-                write(unit, '(A)',advance="no") '|'
-            end if
-        end do
-        
+        write(unit, '(A)',advance="no") 'node1[label="',self%hashT(1)%name
         do i = 1, size(self%hashT) - 1
-            if (self%hashT(i)%dpi /= -1) then
+            if (self%hashT(i)%name /= 'null') then
                 write(unit, '(A,I0,A,A)',advance="no") '|'//trim(self%hashT(i)%name)
-            end if
+            else 
+                write(unit, '(A)',advance="no") '|'
+            end if 
         end do
         write(unit, '(A)') '"];'
         
         write(unit, '(A)') '}'
     
         close(unit)
-        call system('dot -Tpng images/' // trim(adjustl(filename)) // '.dot -o images/' // trim(adjustl(filename)) // '.png')
+        call system('dot -Tpng images/hash.dot -o images/hash.png')
         ! windows
         ! call system("start images\merkle.png")
         !linux
-        call system("eog images/" // trim(adjustl(filename)) // ".png") !si da error se debe de usar "unset GTK_PATH"
+        call system("eog images/hash.png") !si da error se debe de usar "unset GTK_PATH"
     end subroutine grafico
 end module TableHash

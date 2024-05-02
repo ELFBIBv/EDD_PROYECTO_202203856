@@ -1,0 +1,82 @@
+[
+    {
+        "dpi": "1111111111111",
+        "nombre": "Calificacion",
+        "apellido": "Fase3",
+        "genero": "Masculino",
+        "direccion": "8 calle 3-45 zona 1",
+        "telefono": 12345678
+    },
+    {
+        "dpi": "2837465890234",
+        "nombre": "María",
+        "apellido": "López Pérez",
+        "genero": "Femenino",
+        "direccion": "12 avenida 5-67 zona 2",
+        "telefono": 23456789
+    },
+    {
+        "dpi": "8392016475839",
+        "nombre": "Carlos",
+        "apellido": "Hernández García",
+        "genero": "Masculino",
+        "direccion": "3 calle 10-23 zona 4",
+        "telefono": 34567890
+    },
+    {
+        "dpi": "5678234890123",
+        "nombre": "Ana",
+        "apellido": "Martínez Rodríguez",
+        "genero": "Femenino",
+        "direccion": "15 avenida 8-90 zona 3",
+        "telefono": 45678901
+    },
+    {
+        "dpi": "9012345678901",
+        "nombre": "Pedro",
+        "apellido": "Gómez Sánchez",
+        "genero": "Masculino",
+        "direccion": "9 calle 15-32 zona 5",
+        "telefono": 56789012
+    },
+    {
+        "dpi": "3456789012345",
+        "nombre": "Sofía",
+        "apellido": "Díaz López",
+        "genero": "Femenino",
+        "direccion": "6 avenida 7-54 zona 6",
+        "telefono": 67890123
+    },
+    {
+        "dpi": "6789012345678",
+        "nombre": "Luis",
+        "apellido": "Torres Ramírez",
+        "genero": "Masculino",
+        "direccion": "11 calle 4-21 zona 7",
+        "telefono": 78901234
+    },
+    {
+        "dpi": "1234567890123",
+        "nombre": "Elena",
+        "apellido": "Vásquez Méndez",
+        "genero": "Femenino",
+        "direccion": "4 avenida 9-87 zona 8",
+        "telefono": 89012345
+    },
+    {
+        "dpi": "4567890123456",
+        "nombre": "Javier",
+        "apellido": "Jiménez Hernández",
+        "genero": "Masculino",
+        "direccion": "10 calle 6-78 zona 9",
+        "telefono": 90123456
+    },
+    {
+        "dpi": "7890123456789",
+        "nombre": "Laura",
+        "apellido": "Pérez García",
+        "genero": "Femenino",
+        "direccion": "5 avenida 11-43 zona 10",
+        "telefono": 12345678
+    }
+]
